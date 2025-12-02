@@ -1,0 +1,123 @@
+name: Build and Release
+
+on:
+  release:
+    types: [created]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            artifact_name: GradientFrameGenerator-Linux
+            extension: ""
+            python_version: "3.11"
+          - os: windows-latest
+            artifact_name: GradientFrameGenerator-Windows
+            extension: ".exe"
+            python_version: "3.11"
+          - os: macos-latest
+            artifact_name: GradientFrameGenerator-MacOS
+            extension: ""
+            python_version: "3.11"
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python_version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python_version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller pillow
+
+    - name: Verify main.py exists
+      run: |
+        if [ ! -f "main.py" ]; then
+          echo "Error: main.py not found!"
+          echo "Files in repository:"
+          ls -la
+          exit 1
+        fi
+        echo "Found main.py file"
+
+    - name: Build application
+      run: |
+        # Build with PyInstaller using main.py
+        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          pyinstaller --onefile --windowed --name "GradientFrameGenerator${{ matrix.extension }}" --add-data "*.py;." main.py
+        else
+          pyinstaller --onefile --windowed --name "GradientFrameGenerator${{ matrix.extension }}" --add-data "*.py:." main.py
+        fi
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.artifact_name }}
+        path: |
+          ${{ matrix.artifact_name }}${{ matrix.extension }}
+          README.txt
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./artifacts
+
+    - name: Display structure of downloaded files
+      run: find ./artifacts -type f
+
+    - name: Create release assets
+      run: |
+        # Create zip files for each platform
+        cd artifacts
+        
+        # Create release folder
+        mkdir -p ../release
+        
+        # Linux
+        if [ -d "GradientFrameGenerator-Linux" ]; then
+          cd GradientFrameGenerator-Linux
+          zip -r ../../release/GradientFrameGenerator-Linux.zip .
+          cd ..
+        fi
+        
+        # Windows
+        if [ -d "GradientFrameGenerator-Windows" ]; then
+          cd GradientFrameGenerator-Windows
+          zip -r ../../release/GradientFrameGenerator-Windows.zip .
+          cd ..
+        fi
+        
+        # macOS
+        if [ -d "GradientFrameGenerator-MacOS" ]; then
+          cd GradientFrameGenerator-MacOS
+          zip -r ../../release/GradientFrameGenerator-MacOS.zip .
+          cd ..
+        fi
+        
+        cd ..
+
+    - name: Upload release assets
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          release/GradientFrameGenerator-Linux.zip
+          release/GradientFrameGenerator-Windows.zip
+          release/GradientFrameGenerator-MacOS.zip
+        tag_name: ${{ github.event.release.tag_name }}
