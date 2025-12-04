@@ -63,6 +63,7 @@ jobs:
         fi
 
     - name: Prepare artifact
+      shell: bash
       run: |
         if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
           mv dist/GradientFrameGenerator.exe "${{ matrix.artifact_name }}${{ matrix.extension }}"
