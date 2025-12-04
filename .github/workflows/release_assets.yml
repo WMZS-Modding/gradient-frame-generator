@@ -56,20 +56,25 @@ jobs:
     - name: Build application
       shell: bash
       run: |
-        # Build with PyInstaller using main.py
         if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
           pyinstaller --onefile --windowed --name "GradientFrameGenerator${{ matrix.extension }}" --add-data "*.py;." main.py
         else
           pyinstaller --onefile --windowed --name "GradientFrameGenerator${{ matrix.extension }}" --add-data "*.py:." main.py
         fi
 
+    - name: Prepare artifact
+      run: |
+        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          mv dist/GradientFrameGenerator.exe "${{ matrix.artifact_name }}${{ matrix.extension }}"
+        else
+          mv dist/GradientFrameGenerator "${{ matrix.artifact_name }}${{ matrix.extension }}"
+        fi
+
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.artifact_name }}
-        path: |
-          ${{ matrix.artifact_name }}${{ matrix.extension }}
-          README.txt
+        path: ${{ matrix.artifact_name }}${{ matrix.extension }}
 
   release:
     needs: build
@@ -86,30 +91,25 @@ jobs:
 
     - name: Create release assets
       run: |
-        # Create zip files for each platform
         cd artifacts
-        
-        # Create release folder
+
         mkdir -p ../release
-        
-        # Linux
+
         if [ -d "GradientFrameGenerator-Linux" ]; then
           cd GradientFrameGenerator-Linux
-          zip -r ../../release/GradientFrameGenerator-Linux.zip .
+          zip -j ../../release/GradientFrameGenerator-Linux.zip GradientFrameGenerator*
           cd ..
         fi
-        
-        # Windows
+
         if [ -d "GradientFrameGenerator-Windows" ]; then
           cd GradientFrameGenerator-Windows
-          zip -r ../../release/GradientFrameGenerator-Windows.zip .
+          zip -j ../../release/GradientFrameGenerator-Windows.zip GradientFrameGenerator*
           cd ..
         fi
-        
-        # macOS
+
         if [ -d "GradientFrameGenerator-MacOS" ]; then
           cd GradientFrameGenerator-MacOS
-          zip -r ../../release/GradientFrameGenerator-MacOS.zip .
+          zip -j ../../release/GradientFrameGenerator-MacOS.zip GradientFrameGenerator*
           cd ..
         fi
         
