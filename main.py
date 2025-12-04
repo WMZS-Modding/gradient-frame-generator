@@ -25,12 +25,10 @@ class GradientFrameGenerator:
         main_container = tk.Frame(self.root)
         main_container.pack(fill=tk.BOTH, expand=True)
 
-        self.canvas = tk.Canvas(main_container)
+        self.canvas = tk.Canvas(main_container, highlightthickness=0)
         scrollbar = ttk.Scrollbar(main_container, orient="vertical", command=self.canvas.yview)
 
         self.canvas_frame = tk.Frame(self.canvas)
-
-        self.canvas_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
 
         self.canvas_window = self.canvas.create_window((0, 0), window=self.canvas_frame, anchor="n")
 
@@ -42,9 +40,14 @@ class GradientFrameGenerator:
         self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
 
         self.canvas.bind("<Configure>", self._center_content)
+        self.canvas_frame.bind("<Configure>", self._update_scrollregion)
+
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+        self.canvas.bind_all("<Button-4>", self._on_mousewheel)
+        self.canvas.bind_all("<Button-5>", self._on_mousewheel)
 
         center_frame = tk.Frame(self.canvas_frame)
-        center_frame.pack(expand=True, fill=tk.X)
+        center_frame.pack(expand=True, fill=tk.X, padx=20)
 
         title_label = tk.Label(center_frame, text="Gradient Frame Generator", font=("Arial", 16, "bold"))
         title_label.pack(pady=(0, 10))
@@ -146,7 +149,9 @@ class GradientFrameGenerator:
         self.status_label.pack(pady=(10, 20))
 
     def _center_content(self, event):
-        canvas_width = event.width
+        self._update_scrollregion()
+
+        canvas_width = self.canvas.winfo_width()
 
         self.canvas_frame.update_idletasks()
         frame_width = self.canvas_frame.winfo_reqwidth()
@@ -158,16 +163,23 @@ class GradientFrameGenerator:
 
         self.canvas.coords(self.canvas_window, new_x, 0)
 
-        self.canvas.itemconfig(self.canvas_window, width=max(frame_width, canvas_width))
+        self.canvas.itemconfig(self.canvas_window, width=canvas_width)
 
     def _on_mousewheel(self, event):
         if hasattr(event, 'delta'):
-            self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-        elif event.num == 5:
-            self.canvas.yview_scroll(1, "units")
-        elif event.num == 4:
-            self.canvas.yview_scroll(-1, "units")
-        
+            delta = event.delta
+            if delta:
+                self.canvas.yview_scroll(int(-1 * (delta / 120)), "units")
+
+        elif event.num in (4, 5):
+            delta = -1 if event.num == 4 else 1
+            self.canvas.yview_scroll(delta, "units")
+
+        return "break"
+
+    def _update_scrollregion(self, event=None):
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
     def load_image1(self):
         path = filedialog.askopenfilename(
             filetypes=[("Image files", "*.png *.jpg *.jpeg *.bmp *.gif")]
