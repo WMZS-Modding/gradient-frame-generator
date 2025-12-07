@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from PIL import Image, ImageTk
 import os
-import shutil
 
 class GradientFrameGenerator:
     def __init__(self, root):
@@ -20,7 +19,30 @@ class GradientFrameGenerator:
         self.current_frame = 0
 
         self.setup_ui()
-        
+
+        self.create_menu_bar()
+
+    def create_menu_bar(self):
+        menubar = tk.Menu(self.root)
+        self.root.config(menu=menubar)
+
+        about_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="About", menu=about_menu)
+        about_menu.add_command(label="Bug reports/Feature Requests", command=lambda: self.open_url("https://github.com/WMZS-Modding/gradient-frame-generator/issues"))
+        about_menu.add_command(label="Pull Requests", command=lambda: self.open_url("https://github.com/WMZS-Modding/gradient-frame-generator/pulls"))
+        about_menu.add_command(label="Discord", command=lambda: self.open_url("https://discord.gg/5BWTwGf8Rt"))
+        about_menu.add_command(label="YouTube", command=lambda: self.open_url("https://youtube.com/@SuperHero20102"))
+        about_menu.add_separator()
+        about_menu.add_command(label="Check for update", command=lambda: self.open_url("https://github.com/WMZS-Modding/gradient-frame-generator/releases"))
+        about_menu.add_command(label="About", command=self.show_about)
+
+    def open_url(self, url):
+        import webbrowser
+        try:
+            webbrowser.open(url)
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not open URL: {e}")
+
     def setup_ui(self):
         main_container = tk.Frame(self.root)
         main_container.pack(fill=tk.BOTH, expand=True)
@@ -57,29 +79,29 @@ class GradientFrameGenerator:
 
         self.left_frame = tk.LabelFrame(images_container, text="Starting Image", padx=10, pady=10)
         self.left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
-    
+
         self.left_image_label = tk.Label(self.left_frame, text="No image loaded", bg="gray90", width=40, height=20)
         self.left_image_label.pack(padx=10, pady=10)
-    
+
         left_btn_frame = tk.Frame(self.left_frame)
         left_btn_frame.pack()
-    
+
         tk.Button(left_btn_frame, text="Load Image 1", command=self.load_image1).pack(side=tk.LEFT, padx=5)
 
         self.right_frame = tk.LabelFrame(images_container, text="Ending Image", padx=10, pady=10)
         self.right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(10, 0))
-    
+
         self.right_image_label = tk.Label(self.right_frame, text="No image loaded", bg="gray90", width=40, height=20)
         self.right_image_label.pack(padx=10, pady=10)
-    
+
         right_btn_frame = tk.Frame(self.right_frame)
         right_btn_frame.pack()
-    
+
         tk.Button(right_btn_frame, text="Load Image 2", command=self.load_image2).pack(side=tk.LEFT, padx=5)
 
         color_container = tk.Frame(center_frame)
         color_container.pack(fill=tk.X, expand=True, padx=20, pady=(10, 0))
-    
+
         color_frame = tk.LabelFrame(color_container, text="Color Mapping", padx=10, pady=10)
         color_frame.pack(fill=tk.X, expand=True)
 
@@ -89,11 +111,11 @@ class GradientFrameGenerator:
         start_header_frame = tk.Frame(header_frame, width=135, height=25)
         start_header_frame.grid(row=0, column=0, padx=(0, 15), sticky="w")
         start_header_frame.grid_propagate(False)
-    
+
         end_header_frame = tk.Frame(header_frame, width=135, height=25)
         end_header_frame.grid(row=0, column=1, padx=(0, 15), sticky="w")
         end_header_frame.grid_propagate(False)
-    
+
         preview_header_frame = tk.Frame(header_frame, width=40, height=25)
         preview_header_frame.grid(row=0, column=2, padx=(0, 15), sticky="w")
         preview_header_frame.grid_propagate(False)
@@ -119,29 +141,29 @@ class GradientFrameGenerator:
 
         btn_frame = tk.Frame(color_frame)
         btn_frame.pack(fill=tk.X, pady=5)
-    
+
         tk.Button(btn_frame, text="+ Add Color", command=self.add_color_pair, bg="lightblue").pack(side=tk.LEFT)
 
         controls_container = tk.Frame(center_frame)
         controls_container.pack(fill=tk.X, expand=True, padx=20, pady=(10, 0))
-    
+
         controls_frame = tk.LabelFrame(controls_container, text="Generation Controls", padx=10, pady=10)
         controls_frame.pack(fill=tk.X, expand=True)
 
         slider_frame = tk.Frame(controls_frame)
         slider_frame.pack(fill=tk.X, pady=(0, 10))
-    
+
         tk.Label(slider_frame, text="Number of Frames:").pack(side=tk.LEFT, padx=(0, 10))
-    
+
         self.frame_count_var = tk.IntVar(value=10)
         self.frame_slider = tk.Scale(slider_frame, from_=2, to=500, variable=self.frame_count_var, orient=tk.HORIZONTAL, length=300)
         self.frame_slider.pack(side=tk.LEFT)
-    
+
         tk.Label(slider_frame, textvariable=self.frame_count_var, width=4).pack(side=tk.LEFT, padx=(5, 0))
 
         start_button_frame = tk.Frame(controls_frame)
         start_button_frame.pack(fill=tk.X, pady=10)
-    
+
         self.start_button = tk.Button(start_button_frame, text="START GENERATION", command=self.start_generation, bg="lightgreen", font=("Arial", 12, "bold"), padx=20, pady=10)
         self.start_button.pack()
 
@@ -181,21 +203,17 @@ class GradientFrameGenerator:
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def load_image1(self):
-        path = filedialog.askopenfilename(
-            filetypes=[("Image files", "*.png *.jpg *.jpeg *.bmp *.gif")]
-        )
+        path = filedialog.askopenfilename(filetypes=[("Image files", "*.png *.jpg *.jpeg *.bmp *.gif")])
         if path:
             self.image1_path = path
             self.display_image(path, self.left_image_label)
-            
+
     def load_image2(self):
-        path = filedialog.askopenfilename(
-            filetypes=[("Image files", "*.png *.jpg *.jpeg *.bmp *.gif")]
-        )
+        path = filedialog.askopenfilename(filetypes=[("Image files", "*.png *.jpg *.jpeg *.bmp *.gif")])
         if path:
             self.image2_path = path
             self.display_image(path, self.right_image_label)
-            
+
     def display_image(self, path, label):
         try:
             img = Image.open(path)
@@ -205,7 +223,7 @@ class GradientFrameGenerator:
             label.image = photo
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load image: {str(e)}")
-    
+
     def add_color_pair(self):
         color_frame = tk.Frame(self.color_container)
         color_frame.pack(fill=tk.X, pady=5)
@@ -266,11 +284,11 @@ class GradientFrameGenerator:
                 widgets['preview_label'].configure(bg=start_color, fg=end_color)
 
                 widgets['preview_frame'].configure(bg=start_color)
-            
+
             else:
                 widgets['preview_label'].configure(bg="gray", fg="black")
                 widgets['preview_frame'].configure(bg="gray")
-            
+
         except Exception as e:
             widgets['preview_label'].configure(bg="gray", fg="black")
             widgets['preview_frame'].configure(bg="gray")
@@ -295,20 +313,17 @@ class GradientFrameGenerator:
                     widgets['remove_button'].grid(row=0, column=3, sticky="w")
 
     def get_brightness(self, hex_color):
-        """Calculate brightness of a hex color"""
         hex_color = hex_color.lstrip('#')
         r, g, b = int(hex_color[0:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16)
         return (r * 299 + g * 587 + b * 114) / 1000
-    
+
     def hex_to_rgb(self, hex_color):
-        """Convert hex color to RGB tuple"""
         hex_color = hex_color.lstrip('#')
         return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-    
+
     def rgb_to_hex(self, rgb):
-        """Convert RGB tuple to hex color"""
         return '#{:02x}{:02x}{:02x}'.format(*rgb)
-    
+
     def start_generation(self):
         if not self.image1_path or not self.image2_path:
             messagebox.showwarning("Warning", "Please load both images!")
@@ -326,7 +341,7 @@ class GradientFrameGenerator:
                 messagebox.showwarning("Warning", 
                     f"Invalid color format: {start_color} or {end_color}\nUse #RRGGBB format")
                 return
-        
+
         if not self.color_pairs:
             messagebox.showwarning("Warning", "Please add at least one color pair!")
             return
@@ -335,7 +350,7 @@ class GradientFrameGenerator:
 
         self.status_label.config(text="Generating frames...", fg="orange")
         self.root.update()
-        
+
         try:
             img1 = Image.open(self.image1_path).convert('RGBA')
             img2 = Image.open(self.image2_path).convert('RGBA')
@@ -355,7 +370,7 @@ class GradientFrameGenerator:
                     for y in range(img1.height):
                         if pixels1[x, y][:3] == rgb_target:
                             positions.append((x, y))
-                
+
                 if positions:
                     color_positions[start_color] = positions
                 else:
@@ -376,9 +391,7 @@ class GradientFrameGenerator:
 
                 for start_color, end_color in self.color_pairs:
                     if start_color in color_positions:
-                        rgb_start = self.hex_to_rgb(start_color)
-                        rgb_end = self.hex_to_rgb(end_color)
-                        
+
                         for x, y in color_positions[start_color]:
                             r1, g1, b1, a1 = pixels1[x, y]
                             r2, g2, b2, a2 = pixels2[x, y]
@@ -387,7 +400,7 @@ class GradientFrameGenerator:
                             g = int(g1 + (g2 - g1) * factor)
                             b = int(b1 + (b2 - b1) * factor)
                             a = int(a1 + (a2 - a1) * factor)
-                            
+
                             result_pixels[x, y] = (r, g, b, a)
 
                 result.save(os.path.join(output_dir, f"frame_{frame:04d}.png"))
@@ -399,10 +412,25 @@ class GradientFrameGenerator:
             self.status_label.config(text=f"{frame_count} frames saved to {output_dir}", fg="green")
             messagebox.showinfo("Success", 
                 f"Generated {frame_count} frames!\nSaved to: {output_dir}")
-            
+
         except Exception as e:
             self.status_label.config(text="Error!", fg="red")
             messagebox.showerror("Error", f"Generation failed: {str(e)}")
+
+    def show_bug_reports(self):
+        messagebox.showinfo("Bug Reports/Feature Requests", "Please report bugs and feature requests on our GitHub repository.")
+
+    def show_pull_requests(self):
+        messagebox.showinfo("Pull Requests", "We welcome pull requests! Please contribute to our GitHub repository.")
+
+    def show_discord(self):
+        messagebox.showinfo("Discord", "Join our Discord community for discussions and support.")
+
+    def show_youtube(self):
+        messagebox.showinfo("YouTube", "Check our YouTube channel for tutorials and demonstrations.")
+
+    def show_about(self):
+        messagebox.showinfo("About", "Gradient Frame Generator v0.1.1\n\nA tool designed to create frames of your gradient.\n\nCredits:\nSuperHero2010: Owner and Author of Gradient Frame Generator")
 
 def main():
     root = tk.Tk()
