@@ -30,12 +30,30 @@ python main.py
 ```
 
 ## Usage
+### Manual mode
 1. Open the app
-2. Choose your input and output images (must be the same)
+2. Choose your input and output images (they must be the same)
 3. Choose your colors to your gradient
 4. Choose your frames you want
 5. Click `START GENERATION` button
 6. Go to `save/gradient-frame-<number>/` and copy these gradient frame images
+
+### Automatic mode
+1. Open the app
+2. Tick `Auto mode`
+3. Choose your input and output images (they must be the same)
+4. Choose your frames you want
+5. Click `START GENERATION` button
+6. Go to `save/gradient-frame-<number>/` and copy these gradient frame images
+
+## Advantages and Disadvantages
+### Manual mode
+- Advantages: Gives you the correct result. It can handle both two identical input colors in image 1 and two different output colors in image 2
+- Disadvantages: Still wastes your time because you must add colors manually. And it maybe make a mistake if you don't add missing colors
+
+### Automatic mode
+- Advantages: Gives you the same result as manual mode. It can still handle both two identical input colors in image 1 and two different output colors in image 2. The only different is it doesn't requires adding colors manually
+- Disadvantages: Difficult to control because it scans both images simultaneously
 
 ## Note
 If you don't want 500 frames limit, you can follow these step to change limit:
