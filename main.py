@@ -12,6 +12,8 @@ class GradientFrameGenerator:
         self.save_folder = "save"
         os.makedirs(self.save_folder, exist_ok=True)
 
+        self.auto_mode = tk.BooleanVar(value=True)
+
         self.image1_path = None
         self.image2_path = None
         self.color_pairs = []
@@ -160,6 +162,23 @@ class GradientFrameGenerator:
         self.frame_slider.pack(side=tk.LEFT)
 
         tk.Label(slider_frame, textvariable=self.frame_count_var, width=4).pack(side=tk.LEFT, padx=(5, 0))
+
+        mode_frame = tk.Frame(controls_frame)
+        mode_frame.pack(fill=tk.X, pady=(0, 10))
+
+        tk.Label(mode_frame, text="Mode:").pack(side=tk.LEFT, padx=(0, 10))
+
+        self.mode_toggle = tk.Checkbutton(mode_frame, text="Auto Mode", variable=self.auto_mode, command=self.toggle_mode, font=("Arial", 10))
+        self.mode_toggle.pack(side=tk.LEFT)
+
+        self.mode_desc = tk.Label(mode_frame, text="", fg="gray", font=("Arial", 9))
+        self.mode_desc.pack(side=tk.LEFT, padx=(10, 0))
+
+        controls_container = tk.Frame(center_frame)
+        controls_container.pack(fill=tk.X, expand=True, padx=20, pady=(10, 0))
+
+        controls_frame = tk.LabelFrame(controls_container, text="Generation Controls", padx=10, pady=10)
+        controls_frame.pack(fill=tk.X, expand=True)
 
         start_button_frame = tk.Frame(controls_frame)
         start_button_frame.pack(fill=tk.X, pady=10)
@@ -312,6 +331,22 @@ class GradientFrameGenerator:
                 if 'remove_button' in widgets:
                     widgets['remove_button'].grid(row=0, column=3, sticky="w")
 
+    def toggle_mode(self):
+        if self.auto_mode.get():
+            self.mode_desc.config(text="(Automatically detects color differences)")
+
+            color_frame = self.color_container.master
+            color_frame.pack_forget()
+
+        else:
+            self.mode_desc.config(text="(Manually specify color mappings)")
+
+            color_frame = self.color_container.master
+            color_frame.pack(fill=tk.X, pady=(10, 0))
+
+        self.root.update_idletasks()
+        self._update_scrollregion()
+
     def get_brightness(self, hex_color):
         hex_color = hex_color.lstrip('#')
         r, g, b = int(hex_color[0:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16)
@@ -325,6 +360,98 @@ class GradientFrameGenerator:
         return '#{:02x}{:02x}{:02x}'.format(*rgb)
 
     def start_generation(self):
+        if not self.image1_path or not self.image2_path:
+            messagebox.showwarning("Warning", "Please load both images!")
+            return
+
+        if self.auto_mode.get():
+            self.start_auto_generation()
+        else:
+            self.start_manual_generation()
+
+    def start_auto_generation(self):
+        if not self.image1_path or not self.image2_path:
+            messagebox.showwarning("Warning", "Please load both images!")
+            return
+
+        frame_count = self.frame_count_var.get()
+
+        self.status_label.config(text="Analyzing images...", fg="orange")
+        self.root.update()
+
+        try:
+            img1 = Image.open(self.image1_path).convert('RGBA')
+            img2 = Image.open(self.image2_path).convert('RGBA')
+
+            if img1.size != img2.size:
+                img2 = img2.resize(img1.size)
+
+            pixels1 = img1.load()
+            pixels2 = img2.load()
+
+            color_positions = {}
+            for x in range(img1.width):
+                for y in range(img1.height):
+                    color1 = pixels1[x, y][:3]
+                    color2 = pixels2[x, y][:3]
+
+                    if color1 != color2:
+                        hex_color = self.rgb_to_hex(color1)
+                        if hex_color not in color_positions:
+                            color_positions[hex_color] = []
+                        color_positions[hex_color].append((x, y))
+
+            if not color_positions:
+                messagebox.showinfo("Info", "No color differences found between images!")
+                return
+
+            print(f"Found {len(color_positions)} unique colors to animate")
+
+            output_dir = os.path.join(self.save_folder, f"gradient_frames_{len(os.listdir(self.save_folder))}")
+            os.makedirs(output_dir, exist_ok=True)
+
+            self.status_label.config(text="Generating frames...", fg="orange")
+            self.root.update()
+
+            for frame in range(frame_count):
+                result = Image.new('RGBA', img1.size)
+                result_pixels = result.load()
+
+                factor = frame / (frame_count - 1) if frame_count > 1 else 0
+
+                for x in range(img1.width):
+                    for y in range(img1.height):
+                        result_pixels[x, y] = pixels1[x, y]
+
+                for hex_color, positions in color_positions.items():
+                    for x, y in positions:
+                        r1, g1, b1, a1 = pixels1[x, y]
+                        r2, g2, b2, a2 = pixels2[x, y]
+
+                        r = int(r1 + (r2 - r1) * factor)
+                        g = int(g1 + (g2 - g1) * factor)
+                        b = int(b1 + (b2 - b1) * factor)
+                        a = int(a1 + (a2 - a1) * factor)
+
+                        result_pixels[x, y] = (r, g, b, a)
+
+                result.save(os.path.join(output_dir, f"frame_{frame:04d}.png"))
+
+                if frame % 10 == 0 or frame == frame_count - 1:
+                    self.status_label.config(text=f"Generating... {frame+1}/{frame_count}")
+                    self.root.update()
+
+            self.status_label.config(text=f"{frame_count} frames saved to {output_dir}", fg="green")
+            messagebox.showinfo("Success", 
+                f"Generated {frame_count} frames!\n"
+                f"Animated {len(color_positions)} unique colors\n"
+                f"Saved to: {output_dir}")
+
+        except Exception as e:
+            self.status_label.config(text="Error!", fg="red")
+            messagebox.showerror("Error", f"Generation failed: {str(e)}")
+
+    def start_manual_generation(self):
         if not self.image1_path or not self.image2_path:
             messagebox.showwarning("Warning", "Please load both images!")
             return
@@ -430,7 +557,7 @@ class GradientFrameGenerator:
         messagebox.showinfo("YouTube", "Check our YouTube channel for tutorials and demonstrations.")
 
     def show_about(self):
-        messagebox.showinfo("About", "Gradient Frame Generator v0.1.1\n\nA tool designed to create frames of your gradient.\n\nCredits:\nSuperHero2010: Owner and Author of Gradient Frame Generator")
+        messagebox.showinfo("About", "Gradient Frame Generator v0.2\n\nA tool designed to create frames of your gradient.\n\nCredits:\nSuperHero2010: Owner and Author of Gradient Frame Generator")
 
 def main():
     root = tk.Tk()
