@@ -5,6 +5,7 @@ import os
 
 class GradientFrameGenerator:
     def __init__(self, root):
+        self.notebook = None
         self.root = root
         self.root.title("Gradient Frame Generator")
         self.root.geometry("1200x800")
@@ -13,6 +14,8 @@ class GradientFrameGenerator:
         os.makedirs(self.save_folder, exist_ok=True)
 
         self.auto_mode = tk.BooleanVar(value=True)
+
+        self.frame_extractor_mode = tk.BooleanVar(value=False)
 
         self.image1_path = None
         self.image2_path = None
@@ -76,7 +79,21 @@ class GradientFrameGenerator:
         title_label = tk.Label(center_frame, text="Gradient Frame Generator", font=("Arial", 16, "bold"))
         title_label.pack(pady=(0, 10))
 
-        images_container = tk.Frame(center_frame)
+        self.notebook = ttk.Notebook(self.canvas_frame)
+        self.notebook.pack(fill=tk.BOTH, expand=True, padx=20, pady=(0, 10))
+
+        self.gradient_tab = tk.Frame(self.notebook)
+        self.notebook.add(self.gradient_tab, text="Gradient Frame Generator")
+        self._setup_gradient_tab()
+
+        self.extractor_tab = tk.Frame(self.notebook)
+        self.notebook.add(self.extractor_tab, text="Frame Extractor")
+        self._setup_extractor_tab()
+
+        self.notebook.bind("<<NotebookTabChanged>>", self.on_tab_changed)
+
+    def _setup_gradient_tab(self):
+        images_container = tk.Frame(self.gradient_tab)
         images_container.pack(fill=tk.BOTH, expand=True, padx=20)
 
         self.left_frame = tk.LabelFrame(images_container, text="Starting Image", padx=10, pady=10)
@@ -101,7 +118,7 @@ class GradientFrameGenerator:
 
         tk.Button(right_btn_frame, text="Load Image 2", command=self.load_image2).pack(side=tk.LEFT, padx=5)
 
-        color_container = tk.Frame(center_frame)
+        color_container = tk.Frame(self.gradient_tab)
         color_container.pack(fill=tk.X, expand=True, padx=20, pady=(10, 0))
 
         color_frame = tk.LabelFrame(color_container, text="Color Mapping", padx=10, pady=10)
@@ -146,7 +163,7 @@ class GradientFrameGenerator:
 
         tk.Button(btn_frame, text="+ Add Color", command=self.add_color_pair, bg="lightblue").pack(side=tk.LEFT)
 
-        controls_container = tk.Frame(center_frame)
+        controls_container = tk.Frame(self.gradient_tab)
         controls_container.pack(fill=tk.X, expand=True, padx=20, pady=(10, 0))
 
         controls_frame = tk.LabelFrame(controls_container, text="Generation Controls", padx=10, pady=10)
@@ -174,20 +191,55 @@ class GradientFrameGenerator:
         self.mode_desc = tk.Label(mode_frame, text="", fg="gray", font=("Arial", 9))
         self.mode_desc.pack(side=tk.LEFT, padx=(10, 0))
 
-        controls_container = tk.Frame(center_frame)
+        controls_container = tk.Frame(self.gradient_tab)
         controls_container.pack(fill=tk.X, expand=True, padx=20, pady=(10, 0))
 
         controls_frame = tk.LabelFrame(controls_container, text="Generation Controls", padx=10, pady=10)
         controls_frame.pack(fill=tk.X, expand=True)
 
-        start_button_frame = tk.Frame(controls_frame)
-        start_button_frame.pack(fill=tk.X, pady=10)
-
-        self.start_button = tk.Button(start_button_frame, text="START GENERATION", command=self.start_generation, bg="lightgreen", font=("Arial", 12, "bold"), padx=20, pady=10)
+        self.start_button = tk.Button(self.gradient_tab, text="START GENERATION", command=self.start_generation, bg="lightgreen", font=("Arial", 12, "bold"), padx=20, pady=10)
         self.start_button.pack()
 
-        self.status_label = tk.Label(center_frame, text="Ready", fg="blue")
+        self.status_label = tk.Label(self.gradient_tab, text="Ready", fg="blue")
         self.status_label.pack(pady=(10, 20))
+
+    def _setup_extractor_tab(self):
+        extractor_title = tk.Label(self.extractor_tab, text="Frame Extractor", font=("Arial", 14, "bold"))
+        extractor_title.pack(pady=(0, 10))
+
+        input_frame = tk.LabelFrame(self.extractor_tab, text="Input Image", padx=10, pady=10)
+        input_frame.pack(fill=tk.X, padx=20, pady=(0, 10))
+
+        self.extractor_image_label = tk.Label(input_frame, text="No image loaded", bg="gray90", width=50, height=15)
+        self.extractor_image_label.pack(padx=10, pady=10)
+
+        tk.Button(input_frame, text="Load Sprite Sheet", command=self.load_extractor_image).pack()
+
+        size_frame = tk.LabelFrame(self.extractor_tab, text="Frame Settings", padx=10, pady=10)
+        size_frame.pack(fill=tk.X, padx=20, pady=(0, 10))
+
+        width_frame = tk.Frame(size_frame)
+        width_frame.pack(fill=tk.X, pady=(0, 10))
+
+        tk.Label(width_frame, text="Frame Width:", width=15, anchor="w").pack(side=tk.LEFT)
+        self.frame_width_var = tk.IntVar(value=32)
+        self.frame_width_entry = tk.Entry(width_frame, textvariable=self.frame_width_var, width=10)
+        self.frame_width_entry.pack(side=tk.LEFT, padx=(10, 0))
+        tk.Label(width_frame, text="px").pack(side=tk.LEFT, padx=(5, 0))
+
+        height_frame = tk.Frame(size_frame)
+        height_frame.pack(fill=tk.X, pady=(0, 10))
+
+        tk.Label(height_frame, text="Frame Height:", width=15, anchor="w").pack(side=tk.LEFT)
+        self.frame_height_var = tk.IntVar(value=32)
+        self.frame_height_entry = tk.Entry(height_frame, textvariable=self.frame_height_var, width=10)
+        self.frame_height_entry.pack(side=tk.LEFT, padx=(10, 0))
+        tk.Label(height_frame, text="px").pack(side=tk.LEFT, padx=(5, 0))
+
+        tk.Button(self.extractor_tab, text="EXTRACT FRAMES", command=self.extract_frames, bg="lightblue", font=("Arial", 12, "bold"), padx=20, pady=10).pack(pady=20)
+
+        self.extractor_status = tk.Label(self.extractor_tab, text="Ready", fg="blue")
+        self.extractor_status.pack()
 
     def _center_content(self, event):
         self._update_scrollregion()
@@ -544,6 +596,77 @@ class GradientFrameGenerator:
             self.status_label.config(text="Error!", fg="red")
             messagebox.showerror("Error", f"Generation failed: {str(e)}")
 
+    def load_extractor_image(self):
+        path = filedialog.askopenfilename(filetypes=[("Image files", "*.png *.jpg *.jpeg *.bmp *.gif")])
+        if path:
+            self.extractor_image_path = path
+            self.display_extractor_image(path)
+
+    def display_extractor_image(self, path):
+        try:
+            img = Image.open(path)
+            img.thumbnail((400, 400))
+            photo = ImageTk.PhotoImage(img)
+            self.extractor_image_label.configure(image=photo, text="")
+            self.extractor_image_label.image = photo
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load image: {str(e)}")
+
+    def extract_frames(self):
+        if not hasattr(self, 'extractor_image_path') or not self.extractor_image_path:
+            messagebox.showwarning("Warning", "Please load an image first!")
+            return
+
+        try:
+            width = self.frame_width_var.get()
+            height = self.frame_height_var.get()
+
+            if width <= 0 or height <= 0:
+                messagebox.showwarning("Warning", "Frame dimensions must be positive!")
+                return
+
+            img = Image.open(self.extractor_image_path)
+
+            cols = img.width // width
+            rows = img.height // height
+
+            if cols == 0 or rows == 0:
+                messagebox.showwarning("Warning", f"Frame size ({width}x{height}) is larger than image ({img.width}x{img.height})!")
+                return
+
+            total_frames = cols * rows
+
+            output_dir = os.path.join(self.save_folder, f"frames_{len(os.listdir(self.save_folder))}")
+            os.makedirs(output_dir, exist_ok=True)
+
+            self.extractor_status.config(text=f"Extracting {total_frames} frames...", fg="orange")
+            self.root.update()
+
+            frame_count = 0
+            for row in range(rows):
+                for col in range(cols):
+                    left = col * width
+                    upper = row * height
+                    right = left + width
+                    lower = upper + height
+
+                    frame = img.crop((left, upper, right, lower))
+                    frame.save(os.path.join(output_dir, f"frame_{frame_count:04d}.png"))
+                    frame_count += 1
+
+            self.extractor_status.config(text=f"{total_frames} frames saved to {output_dir}", fg="green")
+            messagebox.showinfo("Success", 
+                f"Extracted {total_frames} frames!\n"
+                f"Saved to: {output_dir}")
+
+        except Exception as e:
+            self.extractor_status.config(text="Error!", fg="red")
+            messagebox.showerror("Error", f"Extraction failed: {str(e)}")
+
+    def on_tab_changed(self, event):
+        selected = self.notebook.index(self.notebook.select())
+        self.frame_extractor_mode.set(selected == 1)
+
     def show_bug_reports(self):
         messagebox.showinfo("Bug Reports/Feature Requests", "Please report bugs and feature requests on our GitHub repository.")
 
@@ -557,7 +680,7 @@ class GradientFrameGenerator:
         messagebox.showinfo("YouTube", "Check our YouTube channel for tutorials and demonstrations.")
 
     def show_about(self):
-        messagebox.showinfo("About", "Gradient Frame Generator v0.2\n\nA tool designed to create frames of your gradient.\n\nCredits:\nSuperHero2010: Owner and Author of Gradient Frame Generator")
+        messagebox.showinfo("About", "Gradient Frame Generator v0.3\n\nA tool designed to create frames of your gradient.\n\nCredits:\nSuperHero2010: Owner and Author of Gradient Frame Generator")
 
 def main():
     root = tk.Tk()
