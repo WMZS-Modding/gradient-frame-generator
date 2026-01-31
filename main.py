@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from PIL import Image, ImageTk
 import os
+import math
 
 class GradientFrameGenerator:
     def __init__(self, root):
@@ -207,16 +208,40 @@ class GradientFrameGenerator:
         extractor_title = tk.Label(self.extractor_tab, text="Frame Extractor", font=("Arial", 14, "bold"))
         extractor_title.pack(pady=(0, 10))
 
-        input_frame = tk.LabelFrame(self.extractor_tab, text="Input Image", padx=10, pady=10)
-        input_frame.pack(fill=tk.X, padx=20, pady=(0, 10))
+        desc = tk.Label(self.extractor_tab, text="Extract individual frames from sprite sheets or image sequences", fg="gray", font=("Arial", 10))
+        desc.pack(pady=(0, 20))
+
+        notebook_container = tk.Frame(self.extractor_tab, height=500)
+        notebook_container.pack(fill=tk.X, pady=(0, 10))
+        notebook_container.pack_propagate(False)
+
+        self.extractor_notebook = ttk.Notebook(notebook_container)
+        self.extractor_notebook.pack(fill=tk.BOTH, expand=True)
+
+        self.single_tab = tk.Frame(self.extractor_notebook)
+        self.extractor_notebook.add(self.single_tab, text="Single Image")
+        self._setup_single_extractor()
+
+        self.folder_tab = tk.Frame(self.extractor_notebook)
+        self.extractor_notebook.add(self.folder_tab, text="Folder Batch")
+        self._setup_folder_extractor()
+
+        tk.Button(self.extractor_tab, text="EXTRACT FRAMES", command=self.extract_frames, bg="lightblue", font=("Arial", 12, "bold"), padx=20, pady=10).pack(pady=20)
+
+        self.extractor_status = tk.Label(self.extractor_tab, text="Ready", fg="blue")
+        self.extractor_status.pack()
+
+    def _setup_single_extractor(self):
+        input_frame = tk.LabelFrame(self.single_tab, text="Input Image", padx=10, pady=10)
+        input_frame.pack(fill=tk.X, pady=(0, 10))
 
         self.extractor_image_label = tk.Label(input_frame, text="No image loaded", bg="gray90", width=50, height=15)
         self.extractor_image_label.pack(padx=10, pady=10)
 
         tk.Button(input_frame, text="Load Sprite Sheet", command=self.load_extractor_image).pack()
 
-        size_frame = tk.LabelFrame(self.extractor_tab, text="Frame Settings", padx=10, pady=10)
-        size_frame.pack(fill=tk.X, padx=20, pady=(0, 10))
+        size_frame = tk.LabelFrame(self.single_tab, text="Frame Settings", padx=10, pady=10)
+        size_frame.pack(fill=tk.X, pady=(0, 10))
 
         width_frame = tk.Frame(size_frame)
         width_frame.pack(fill=tk.X, pady=(0, 10))
@@ -236,10 +261,15 @@ class GradientFrameGenerator:
         self.frame_height_entry.pack(side=tk.LEFT, padx=(10, 0))
         tk.Label(height_frame, text="px").pack(side=tk.LEFT, padx=(5, 0))
 
-        tk.Button(self.extractor_tab, text="EXTRACT FRAMES", command=self.extract_frames, bg="lightblue", font=("Arial", 12, "bold"), padx=20, pady=10).pack(pady=20)
+    def _setup_folder_extractor(self):
+        folder_frame = tk.LabelFrame(self.folder_tab, text="Input Folder (Sprite Sheets)", padx=10, pady=10)
+        folder_frame.pack(fill=tk.X, pady=(0, 10))
 
-        self.extractor_status = tk.Label(self.extractor_tab, text="Ready", fg="blue")
-        self.extractor_status.pack()
+        self.folder_path_var = tk.StringVar(value="No folder selected")
+        folder_label = tk.Label(folder_frame, textvariable=self.folder_path_var, bg="white", relief="sunken", anchor="w", padx=5, pady=5)
+        folder_label.pack(fill=tk.X, padx=10, pady=(10, 5))
+
+        tk.Button(folder_frame, text="Browse Folder", command=self.select_extractor_folder).pack(pady=(5, 10))
 
     def _center_content(self, event):
         self._update_scrollregion()
@@ -612,7 +642,32 @@ class GradientFrameGenerator:
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load image: {str(e)}")
 
+    def select_extractor_folder(self):
+        folder_path = filedialog.askdirectory(title="Select folder with images")
+        if folder_path:
+            self.extractor_folder_path = folder_path
+            self.folder_path_var.set(folder_path)
+
+            image_count = self._count_images_in_folder(folder_path)
+            self.extractor_status.config(text=f"Found {image_count} images in folder", fg="blue")
+
+    def _count_images_in_folder(self, folder_path):
+        valid_extensions = {'.png', '.jpg', '.jpeg', '.bmp', '.gif'}
+        count = 0
+        for filename in os.listdir(folder_path):
+            if os.path.splitext(filename)[1].lower() in valid_extensions:
+                count += 1
+        return count
+
     def extract_frames(self):
+        selected_tab = self.extractor_notebook.index(self.extractor_notebook.select())
+
+        if selected_tab == 0:
+            self._extract_single_frames()
+        else:
+            self._extract_folder_frames()
+
+    def _extract_single_frames(self):
         if not hasattr(self, 'extractor_image_path') or not self.extractor_image_path:
             messagebox.showwarning("Warning", "Please load an image first!")
             return
@@ -663,6 +718,102 @@ class GradientFrameGenerator:
             self.extractor_status.config(text="Error!", fg="red")
             messagebox.showerror("Error", f"Extraction failed: {str(e)}")
 
+    def _extract_folder_frames(self):
+        if not hasattr(self, 'extractor_folder_path') or not self.extractor_folder_path:
+            messagebox.showwarning("Warning", "Please select a folder first!")
+            return
+
+        try:
+            valid_extensions = {'.png', '.jpg', '.jpeg', '.bmp', '.gif'}
+            image_files = []
+
+            for filename in os.listdir(self.extractor_folder_path):
+                ext = os.path.splitext(filename)[1].lower()
+                if ext in valid_extensions:
+                    image_files.append(filename)
+
+            if not image_files:
+                messagebox.showwarning("Warning", "No image files found in selected folder!")
+                return
+
+            output_dir = os.path.join(self.save_folder, f"frames_{len(os.listdir(self.save_folder))}")
+            os.makedirs(output_dir, exist_ok=True)
+
+            self.extractor_status.config(text=f"Processing {len(image_files)} sprite sheets...", fg="orange")
+            self.root.update()
+
+            total_frames = 0
+            processed_sheets = 0
+
+            for i, filename in enumerate(sorted(image_files)):
+                try:
+                    if i % 2 == 0 or i == len(image_files) - 1:
+                        self.extractor_status.config(text=f"Processing sheet {i+1}/{len(image_files)}...")
+                        self.root.update()
+
+                    img_path = os.path.join(self.extractor_folder_path, filename)
+                    img = Image.open(img_path)
+
+                    width, height = img.size
+
+                    max_possible = min(width, height)
+                    frame_size = 32
+
+                    for size in range(max_possible, 1, -1):
+                        if width % size == 0 and height % size == 0:
+                            frame_size = size
+                            break
+
+                    if frame_size == 32:
+                        frame_size = math.gcd(width, height)
+                        if frame_size < 2:
+                            frame_size = min(32, max_possible)
+
+                    cols = width // frame_size
+                    rows = height // frame_size
+
+                    if cols == 0 or rows == 0:
+                        print(f"Warning: {filename} too small for detected frame size {frame_size}px")
+                        continue
+
+                    frames_from_this_sheet = 0
+                    for row in range(rows):
+                        for col in range(cols):
+                            left = col * frame_size
+                            upper = row * frame_size
+                            right = left + frame_size
+                            lower = upper + frame_size
+
+                            frame = img.crop((left, upper, right, lower))
+                            frame.save(os.path.join(output_dir, f"frame_{total_frames:04d}.png"))
+                            total_frames += 1
+                            frames_from_this_sheet += 1
+
+                    processed_sheets += 1
+                    print(f"Extracted {frames_from_this_sheet} frames from {filename} "
+                          f"({width}x{height}) using {frame_size}x{frame_size} frames")
+
+                except Exception as e:
+                    print(f"Warning: Failed to process {filename}: {str(e)}")
+                    continue
+
+            if total_frames == 0:
+                self.extractor_status.config(text="Error: No frames extracted!", fg="red")
+                messagebox.showwarning("Warning", 
+                    f"No frames extracted from {len(image_files)} sprite sheets!")
+            else:
+                self.extractor_status.config(text=f"{total_frames} frames saved to {output_dir}", fg="green")
+
+                message = (f"Processed {processed_sheets}/{len(image_files)} sprite sheets\n"
+                           f"Extracted {total_frames} total frames\n"
+                           f"Saved to: {output_dir}")
+
+                messagebox.showinfo("Success", message)
+
+        except Exception as e:
+            self.extractor_status.config(text="Error!", fg="red")
+            messagebox.showerror("Error", f"Batch extraction failed: {str(e)}")
+
     def on_tab_changed(self, event):
         selected = self.notebook.index(self.notebook.select())
         self.frame_extractor_mode.set(selected == 1)
@@ -680,7 +831,7 @@ class GradientFrameGenerator:
         messagebox.showinfo("YouTube", "Check our YouTube channel for tutorials and demonstrations.")
 
     def show_about(self):
-        messagebox.showinfo("About", "Gradient Frame Generator v0.3\n\nA tool designed to create frames of your gradient.\n\nCredits:\nSuperHero2010: Owner and Author of Gradient Frame Generator")
+        messagebox.showinfo("About", "Gradient Frame Generator v0.3.1\n\nA tool designed to create frames of your gradient.\n\nCredits:\nSuperHero2010: Owner and Author of Gradient Frame Generator")
 
 def main():
     root = tk.Tk()
