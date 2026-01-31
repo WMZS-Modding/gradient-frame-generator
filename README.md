@@ -76,11 +76,11 @@ python main.py
 - Advantages: Gives you the same result as manual mode. It can still handle both two identical input colors in image 1 and two different output colors in image 2. The only different is it doesn't requires adding colors manually
 - Disadvantages: Difficult to control because it scans both images simultaneously
 
-#### Single Image
+### Single Image
 - Advantages: Can extract accurately frame sizes by entering width and height
 - Disadvantages: For single image only, still waste your time
 
-#### Folder Batch
+### Folder Batch
 - Advantages: Extremely fast. It can handle your folder of sprite sheets no matter they have different frame sizes
 - Disadvantages: Sometimes it can output frames with incorrect original dimensions for sprite sheets with different frame sizes. I recommend separating folders that has different sprite sheets with different frame sizes, it's even faster than handling the whole them
 
