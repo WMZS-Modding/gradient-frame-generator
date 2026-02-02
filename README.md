@@ -67,11 +67,11 @@ python main.py
 5. Click `START GENERATION` button
 6. Go to `save/gradient_frame_<number>/` and copy these gradient frame images
 
-### Change name
+### Change file and folder names
 1. Open the application
 2. Choose `File` section
 3. Choose `Change output naming`
-4. Write your custom name
+4. Write your custom file and folder names
 
 ## Advantages and Disadvantages
 ### Manual mode

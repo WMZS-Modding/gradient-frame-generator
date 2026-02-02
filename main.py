@@ -27,8 +27,10 @@ class GradientFrameGenerator:
         self.setup_ui()
 
         self.create_menu_bar()
-        self.name_pattern = tk.StringVar(value="frame_{number:04d}")
+        self.name_pattern = tk.StringVar(value="frame_{number}")
         self.custom_name_enabled = tk.BooleanVar(value=False)
+        self.folder_pattern = tk.StringVar(value="frames_{number}")
+        self.custom_folder_enabled = tk.BooleanVar(value=False)
 
     def create_menu_bar(self):
         menubar = tk.Menu(self.root)
@@ -283,37 +285,61 @@ class GradientFrameGenerator:
     def open_naming_settings(self):
         dialog = tk.Toplevel(self.root)
         dialog.title("Output Naming Settings")
-        dialog.geometry("400x250")
+        dialog.geometry("500x400")
         dialog.transient(self.root)
         dialog.grab_set()
 
         dialog.update_idletasks()
-        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (400 // 2)
-        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (250 // 2)
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (500 // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (400 // 2)
         dialog.geometry(f"+{x}+{y}")
 
-        tk.Label(dialog, text="Custom Output Naming", font=("Arial", 12, "bold")).pack(pady=(10, 5))
+        tk.Label(dialog, text="Custom output naming", font=("Arial", 12, "bold")).pack(pady=(10, 5))
 
-        enable_frame = tk.Frame(dialog)
-        enable_frame.pack(fill=tk.X, padx=20, pady=(5, 10))
+        file_frame = tk.LabelFrame(dialog, text="File Naming", padx=10, pady=10)
+        file_frame.pack(fill=tk.X, padx=20, pady=(5, 10))
 
-        tk.Checkbutton(enable_frame, text="Enable custom naming", variable=self.custom_name_enabled, command=lambda: self.update_naming_widgets(dialog)).pack(anchor="w")
+        file_enable_frame = tk.Frame(file_frame)
+        file_enable_frame.pack(fill=tk.X, pady=(0, 10))
 
-        pattern_frame = tk.Frame(dialog)
-        pattern_frame.pack(fill=tk.X, padx=20, pady=(5, 10))
+        tk.Checkbutton(file_enable_frame, text="Enable custom file names", variable=self.custom_name_enabled, command=lambda: self.update_file_widgets(dialog)).pack(anchor="w")
 
-        tk.Label(pattern_frame, text="Naming Pattern:", anchor="w").pack(fill=tk.X, pady=(0, 5))
+        pattern_frame = tk.Frame(file_frame)
+        pattern_frame.pack(fill=tk.X, pady=(0, 5))
+
+        tk.Label(pattern_frame, text="File Pattern:", anchor="w").pack(fill=tk.X, pady=(0, 5))
 
         self.pattern_entry = tk.Entry(pattern_frame, width=40)
         self.pattern_entry.insert(0, self.name_pattern.get())
         self.pattern_entry.pack(fill=tk.X)
 
+        folder_frame = tk.LabelFrame(dialog, text="Folder Naming", padx=10, pady=10)
+        folder_frame.pack(fill=tk.X, padx=20, pady=(5, 10))
+
+        folder_enable_frame = tk.Frame(folder_frame)
+        folder_enable_frame.pack(fill=tk.X, pady=(0, 10))
+
+        tk.Checkbutton(folder_enable_frame, text="Enable custom folder names", variable=self.custom_folder_enabled, command=lambda: self.update_folder_widgets(dialog)).pack(anchor="w")
+
+        folder_pattern_frame = tk.Frame(folder_frame)
+        folder_pattern_frame.pack(fill=tk.X, pady=(0, 5))
+
+        tk.Label(folder_pattern_frame, text="Folder Pattern:", anchor="w").pack(fill=tk.X, pady=(0, 5))
+
+        self.folder_pattern_entry = tk.Entry(folder_pattern_frame, width=40)
+        self.folder_pattern_entry.insert(0, self.folder_pattern.get())
+        self.folder_pattern_entry.pack(fill=tk.X)
+
         warning_frame = tk.Frame(dialog)
         warning_frame.pack(fill=tk.X, padx=20, pady=(5, 5))
 
-        self.warning_label = tk.Label(warning_frame, text="Must include {number} placeholder", fg="red", font=("Arial", 9))
-        self.warning_label.pack()
-        self.warning_label.pack_forget()
+        self.file_warning = tk.Label(warning_frame, text="File pattern must include {number}", fg="red", font=("Arial", 9))
+        self.file_warning.pack()
+        self.file_warning.pack_forget()
+
+        self.folder_warning = tk.Label(warning_frame, text="Folder pattern must include {number}", fg="red", font=("Arial", 9))
+        self.folder_warning.pack()
+        self.folder_warning.pack_forget()
 
         button_frame = tk.Frame(dialog)
         button_frame.pack(fill=tk.X, padx=20, pady=(10, 10))
@@ -322,58 +348,114 @@ class GradientFrameGenerator:
 
         tk.Button(button_frame, text="Save", command=lambda: self.save_naming_settings(dialog), bg="lightgreen", width=10).pack(side=tk.LEFT)
 
-        self.update_naming_widgets(dialog)
+        self.update_file_widgets(dialog)
+        self.update_folder_widgets(dialog)
 
-    def update_naming_widgets(self, dialog):
+    def update_file_widgets(self, dialog):
         if hasattr(self, 'pattern_entry'):
             state = 'normal' if self.custom_name_enabled.get() else 'disabled'
             self.pattern_entry.config(state=state)
-
             if state == 'normal':
-                self.check_pattern_validity()
+                self.check_file_pattern()
             else:
-                self.warning_label.pack_forget()
+                self.file_warning.pack_forget()
 
-    def check_pattern_validity(self):
+    def update_folder_widgets(self, dialog):
+        if hasattr(self, 'folder_pattern_entry'):
+            state = 'normal' if self.custom_folder_enabled.get() else 'disabled'
+            self.folder_pattern_entry.config(state=state)
+            if state == 'normal':
+                self.check_folder_pattern()
+            else:
+                self.folder_warning.pack_forget()
+
+    def check_file_pattern(self):
         pattern = self.pattern_entry.get()
         if '{number' in pattern:
-            self.warning_label.pack_forget()
+            self.file_warning.pack_forget()
             return True
         else:
-            self.warning_label.pack()
+            self.file_warning.pack()
+            return False
+
+    def check_folder_pattern(self):
+        pattern = self.folder_pattern_entry.get()
+        if '{number' in pattern:
+            self.folder_warning.pack_forget()
+            return True
+        else:
+            self.folder_warning.pack()
             return False
 
     def save_naming_settings(self, dialog):
+        valid = True
+
         if self.custom_name_enabled.get():
             pattern = self.pattern_entry.get()
-
             if '{number' not in pattern:
-                messagebox.showerror("Invalid Pattern", "Pattern must include {number} placeholder!")
-                return
+                messagebox.showerror("Invalid File Pattern", 
+                    "File pattern must include {number} placeholder!")
+                valid = False
+            else:
+                try:
+                    test_pattern = pattern.replace('{number', '{0')
+                    test_pattern.format(0)
+                    self.name_pattern.set(pattern)
+                except Exception as e:
+                    messagebox.showerror("Invalid File Format", 
+                        f"File pattern format error: {str(e)}")
+                    valid = False
 
-            try:
-                test_pattern = pattern.replace('{number', '{0')
-                test_pattern.format(0)
-                self.name_pattern.set(pattern)
-            except Exception as e:
-                messagebox.showerror("Invalid Format", 
-                    f"Pattern format error: {str(e)}\n\n"
-                    "Valid formats:\n"
-                    "- {number:04d} - 4-digit zero padding\n"
-                    "- {number:03d} - 3-digit zero padding\n"
-                    "- {number:d} - no padding\n"
-                    "- {number:02d} - 2-digit zero padding")
-                return
-        else:
-            self.name_pattern.set("frame_{number:04d}")
+        if self.custom_folder_enabled.get():
+            pattern = self.folder_pattern_entry.get()
+            if '{number' not in pattern:
+                messagebox.showerror("Invalid Folder Pattern", 
+                    "Folder pattern must include {number} placeholder!")
+                valid = False
+            else:
+                try:
+                    test_pattern = pattern.replace('{number', '{0')
+                    test_pattern.format(0)
+                    self.folder_pattern.set(pattern)
+                except Exception as e:
+                    messagebox.showerror("Invalid Folder Format", 
+                        f"Folder pattern format error: {str(e)}")
+                    valid = False
 
-        dialog.destroy()
-        messagebox.showinfo("Settings Saved", f"Naming pattern updated to:\n{self.name_pattern.get()}")
+        if valid:
+            dialog.destroy()
+            message = "Settings saved!\n"
+            if self.custom_name_enabled.get():
+                message += f"Files: {self.name_pattern.get()}\n"
+            if self.custom_folder_enabled.get():
+                message += f"Folders: {self.folder_pattern.get()}"
+            messagebox.showinfo("Settings Saved", message)
 
     def reset_naming_settings(self):
         self.custom_name_enabled.set(False)
-        self.name_pattern.set("frame_{number:04d}")
-        messagebox.showinfo("Settings Reset", "Naming pattern reset to default: frame_{number:04d}")
+        self.name_pattern.set("frame_{number}")
+        self.custom_folder_enabled.set(False)
+        self.folder_pattern.set("frames_{number}")
+        messagebox.showinfo("Settings Reset", 
+            "Reset to default:\n"
+            "Files: frame_{number}\n"
+            "Folders: frames_{number}")
+
+    def get_output_folder_name(self, folder_type="frames"):
+        existing_folders = [d for d in os.listdir(self.save_folder) if os.path.isdir(os.path.join(self.save_folder, d))]
+
+        next_number = len(existing_folders)
+
+        if self.custom_folder_enabled.get():
+            pattern = self.folder_pattern.get()
+            folder_name = pattern.replace('{number', '{0').format(next_number)
+        else:
+            if folder_type == "frames":
+                folder_name = f"frames_{next_number}"
+            else:
+                folder_name = f"gradient_frames_{next_number}"
+
+        return folder_name
 
     def _center_content(self, event):
         self._update_scrollregion()
@@ -593,7 +675,7 @@ class GradientFrameGenerator:
 
             print(f"Found {len(color_positions)} unique colors to animate")
 
-            output_dir = os.path.join(self.save_folder, f"gradient_frames_{len(os.listdir(self.save_folder))}")
+            output_dir = os.path.join(self.save_folder, self.get_output_folder_name("gradient"))
             os.makedirs(output_dir, exist_ok=True)
 
             self.status_label.config(text="Generating frames...", fg="orange")
@@ -697,7 +779,7 @@ class GradientFrameGenerator:
                 else:
                     print(f"Warning: Color {start_color} not found in starting image")
 
-            output_dir = os.path.join(self.save_folder, f"gradient_frames_{len(os.listdir(self.save_folder))}")
+            output_dir = os.path.join(self.save_folder, self.get_output_folder_name("gradient"))
             os.makedirs(output_dir, exist_ok=True)
 
             for frame in range(frame_count):
@@ -811,7 +893,7 @@ class GradientFrameGenerator:
 
             total_frames = cols * rows
 
-            output_dir = os.path.join(self.save_folder, f"frames_{len(os.listdir(self.save_folder))}")
+            output_dir = os.path.join(self.save_folder, self.get_output_folder_name("frames"))
             os.makedirs(output_dir, exist_ok=True)
 
             self.extractor_status.config(text=f"Extracting {total_frames} frames...", fg="orange")
@@ -864,7 +946,7 @@ class GradientFrameGenerator:
                 messagebox.showwarning("Warning", "No image files found in selected folder!")
                 return
 
-            output_dir = os.path.join(self.save_folder, f"frames_{len(os.listdir(self.save_folder))}")
+            output_dir = os.path.join(self.save_folder, self.get_output_folder_name("frames"))
             os.makedirs(output_dir, exist_ok=True)
 
             self.extractor_status.config(text=f"Processing {len(image_files)} sprite sheets...", fg="orange")
