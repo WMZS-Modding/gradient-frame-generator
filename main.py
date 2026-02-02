@@ -27,10 +27,19 @@ class GradientFrameGenerator:
         self.setup_ui()
 
         self.create_menu_bar()
+        self.name_pattern = tk.StringVar(value="frame_{number:04d}")
+        self.custom_name_enabled = tk.BooleanVar(value=False)
 
     def create_menu_bar(self):
         menubar = tk.Menu(self.root)
         self.root.config(menu=menubar)
+
+        file_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="File", menu=file_menu)
+        file_menu.add_command(label="Change output naming", command=self.open_naming_settings)
+        file_menu.add_command(label="Reset to Default", command=self.reset_naming_settings)
+        file_menu.add_separator()
+        file_menu.add_command(label="Exit", command=self.root.quit)
 
         about_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="About", menu=about_menu)
@@ -270,6 +279,101 @@ class GradientFrameGenerator:
         folder_label.pack(fill=tk.X, padx=10, pady=(10, 5))
 
         tk.Button(folder_frame, text="Browse Folder", command=self.select_extractor_folder).pack(pady=(5, 10))
+
+    def open_naming_settings(self):
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Output Naming Settings")
+        dialog.geometry("400x250")
+        dialog.transient(self.root)
+        dialog.grab_set()
+
+        dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (400 // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (250 // 2)
+        dialog.geometry(f"+{x}+{y}")
+
+        tk.Label(dialog, text="Custom Output Naming", font=("Arial", 12, "bold")).pack(pady=(10, 5))
+
+        enable_frame = tk.Frame(dialog)
+        enable_frame.pack(fill=tk.X, padx=20, pady=(5, 10))
+
+        tk.Checkbutton(enable_frame, text="Enable custom naming", variable=self.custom_name_enabled, command=lambda: self.update_naming_widgets(dialog)).pack(anchor="w")
+
+        pattern_frame = tk.Frame(dialog)
+        pattern_frame.pack(fill=tk.X, padx=20, pady=(5, 10))
+
+        tk.Label(pattern_frame, text="Naming Pattern:", anchor="w").pack(fill=tk.X, pady=(0, 5))
+
+        self.pattern_entry = tk.Entry(pattern_frame, width=40)
+        self.pattern_entry.insert(0, self.name_pattern.get())
+        self.pattern_entry.pack(fill=tk.X)
+
+        warning_frame = tk.Frame(dialog)
+        warning_frame.pack(fill=tk.X, padx=20, pady=(5, 5))
+
+        self.warning_label = tk.Label(warning_frame, text="Must include {number} placeholder", fg="red", font=("Arial", 9))
+        self.warning_label.pack()
+        self.warning_label.pack_forget()
+
+        button_frame = tk.Frame(dialog)
+        button_frame.pack(fill=tk.X, padx=20, pady=(10, 10))
+
+        tk.Button(button_frame, text="Cancel", command=dialog.destroy, width=10).pack(side=tk.LEFT, padx=(0, 10))
+
+        tk.Button(button_frame, text="Save", command=lambda: self.save_naming_settings(dialog), bg="lightgreen", width=10).pack(side=tk.LEFT)
+
+        self.update_naming_widgets(dialog)
+
+    def update_naming_widgets(self, dialog):
+        if hasattr(self, 'pattern_entry'):
+            state = 'normal' if self.custom_name_enabled.get() else 'disabled'
+            self.pattern_entry.config(state=state)
+
+            if state == 'normal':
+                self.check_pattern_validity()
+            else:
+                self.warning_label.pack_forget()
+
+    def check_pattern_validity(self):
+        pattern = self.pattern_entry.get()
+        if '{number' in pattern:
+            self.warning_label.pack_forget()
+            return True
+        else:
+            self.warning_label.pack()
+            return False
+
+    def save_naming_settings(self, dialog):
+        if self.custom_name_enabled.get():
+            pattern = self.pattern_entry.get()
+
+            if '{number' not in pattern:
+                messagebox.showerror("Invalid Pattern", "Pattern must include {number} placeholder!")
+                return
+
+            try:
+                test_pattern = pattern.replace('{number', '{0')
+                test_pattern.format(0)
+                self.name_pattern.set(pattern)
+            except Exception as e:
+                messagebox.showerror("Invalid Format", 
+                    f"Pattern format error: {str(e)}\n\n"
+                    "Valid formats:\n"
+                    "- {number:04d} - 4-digit zero padding\n"
+                    "- {number:03d} - 3-digit zero padding\n"
+                    "- {number:d} - no padding\n"
+                    "- {number:02d} - 2-digit zero padding")
+                return
+        else:
+            self.name_pattern.set("frame_{number:04d}")
+
+        dialog.destroy()
+        messagebox.showinfo("Settings Saved", f"Naming pattern updated to:\n{self.name_pattern.get()}")
+
+    def reset_naming_settings(self):
+        self.custom_name_enabled.set(False)
+        self.name_pattern.set("frame_{number:04d}")
+        messagebox.showinfo("Settings Reset", "Naming pattern reset to default: frame_{number:04d}")
 
     def _center_content(self, event):
         self._update_scrollregion()
@@ -517,7 +621,15 @@ class GradientFrameGenerator:
 
                         result_pixels[x, y] = (r, g, b, a)
 
-                result.save(os.path.join(output_dir, f"frame_{frame:04d}.png"))
+                if self.custom_name_enabled.get():
+                    filename = self.name_pattern.get().replace('{number', '{0').format(frame)
+                else:
+                    filename = f"frame_{frame:04d}.png"
+
+                if not filename.lower().endswith('.png'):
+                    filename += '.png'
+
+                result.save(os.path.join(output_dir, filename))
 
                 if frame % 10 == 0 or frame == frame_count - 1:
                     self.status_label.config(text=f"Generating... {frame+1}/{frame_count}")
@@ -612,7 +724,15 @@ class GradientFrameGenerator:
 
                             result_pixels[x, y] = (r, g, b, a)
 
-                result.save(os.path.join(output_dir, f"frame_{frame:04d}.png"))
+                if self.custom_name_enabled.get():
+                    filename = self.name_pattern.get().replace('{number', '{0').format(frame)
+                else:
+                    filename = f"frame_{frame:04d}.png"
+
+                if not filename.lower().endswith('.png'):
+                    filename += '.png'
+
+                result.save(os.path.join(output_dir, filename))
 
                 if frame % 10 == 0:
                     self.status_label.config(text=f"Generating... {frame+1}/{frame_count}")
@@ -705,8 +825,16 @@ class GradientFrameGenerator:
                     right = left + width
                     lower = upper + height
 
+                    if self.custom_name_enabled.get():
+                        filename = self.name_pattern.get().replace('{number', '{0').format(frame_count)
+                    else:
+                        filename = f"frame_{frame_count:04d}.png"
+
+                    if not filename.lower().endswith('.png'):
+                        filename += '.png'
+
                     frame = img.crop((left, upper, right, lower))
-                    frame.save(os.path.join(output_dir, f"frame_{frame_count:04d}.png"))
+                    frame.save(os.path.join(output_dir, filename))
                     frame_count += 1
 
             self.extractor_status.config(text=f"{total_frames} frames saved to {output_dir}", fg="green")
@@ -784,8 +912,16 @@ class GradientFrameGenerator:
                             right = left + frame_size
                             lower = upper + frame_size
 
+                            if self.custom_name_enabled.get():
+                                save_name = self.name_pattern.get().replace('{number', '{0').format(total_frames)
+                            else:
+                                save_name = f"frame_{total_frames:04d}.png"
+
+                            if not save_name.lower().endswith('.png'):
+                                save_name += '.png'
+
                             frame = img.crop((left, upper, right, lower))
-                            frame.save(os.path.join(output_dir, f"frame_{total_frames:04d}.png"))
+                            frame.save(os.path.join(output_dir, save_name))
                             total_frames += 1
                             frames_from_this_sheet += 1
 
@@ -831,7 +967,7 @@ class GradientFrameGenerator:
         messagebox.showinfo("YouTube", "Check our YouTube channel for tutorials and demonstrations.")
 
     def show_about(self):
-        messagebox.showinfo("About", "Gradient Frame Generator v0.3.1\n\nA tool designed to create frames of your gradient.\n\nCredits:\nSuperHero2010: Owner and Author of Gradient Frame Generator")
+        messagebox.showinfo("About", "Gradient Frame Generator v0.3.2\n\nA tool designed to create frames of your gradient.\n\nCredits:\nSuperHero2010: Owner and Author of Gradient Frame Generator")
 
 def main():
     root = tk.Tk()

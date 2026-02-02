@@ -67,6 +67,12 @@ python main.py
 5. Click `START GENERATION` button
 6. Go to `save/gradient_frame_<number>/` and copy these gradient frame images
 
+### Change name
+1. Open the application
+2. Choose `File` section
+3. Choose `Change output naming`
+4. Write your custom name
+
 ## Advantages and Disadvantages
 ### Manual mode
 - Advantages: Gives you the correct result. It can handle both two identical input colors in image 1 and two different output colors in image 2
