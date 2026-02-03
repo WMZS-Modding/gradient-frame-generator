@@ -1063,7 +1063,7 @@ class GradientFrameGenerator:
         messagebox.showinfo("YouTube", "Check our YouTube channel for tutorials and demonstrations.")
 
     def show_about(self):
-        messagebox.showinfo("About", "Gradient Frame Generator v0.3.2.1\n\nA tool designed to create frames of your gradient.\n\nCredits:\nSuperHero2010: Owner and Author of Gradient Frame Generator")
+        messagebox.showinfo("About", "Gradient Frame Generator v1.0\n\nA tool designed to create frames of your gradient.\n\nCredits:\nSuperHero2010: Owner and Author of Gradient Frame Generator")
 
 def main():
     root = tk.Tk()
