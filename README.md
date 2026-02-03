@@ -97,7 +97,7 @@ If you don't want 500 frames limit, you can follow these step to change limit:
 3. Change this code:
 
 ```python
-self.frame_slider = tk.Scale(slider_frame, from_=2, to=500, variable=self.frame_count_var, orient=tk.HORIZONTAL, length=300)
+self.frame_slider = ttk.Scale(slider_frame, from_=2, to=500, variable=self.frame_count_var, orient=tk.HORIZONTAL, length=300, command=lambda v: self.frame_count_var.set(int(float(v))))
 ```
 
 Warning: Only change `to=500`, **don't** set it to `to=2` and change `from_=2` or they'll cause errors

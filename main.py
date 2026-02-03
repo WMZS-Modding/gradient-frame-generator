@@ -117,7 +117,7 @@ class GradientFrameGenerator:
         left_btn_frame = tk.Frame(self.left_frame)
         left_btn_frame.pack()
 
-        tk.Button(left_btn_frame, text="Load Image 1", command=self.load_image1).pack(side=tk.LEFT, padx=5)
+        ttk.Button(left_btn_frame, text="Load Image 1", command=self.load_image1).pack(side=tk.LEFT, padx=5)
 
         self.right_frame = tk.LabelFrame(images_container, text="Ending Image", padx=10, pady=10)
         self.right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(10, 0))
@@ -128,7 +128,7 @@ class GradientFrameGenerator:
         right_btn_frame = tk.Frame(self.right_frame)
         right_btn_frame.pack()
 
-        tk.Button(right_btn_frame, text="Load Image 2", command=self.load_image2).pack(side=tk.LEFT, padx=5)
+        ttk.Button(right_btn_frame, text="Load Image 2", command=self.load_image2).pack(side=tk.LEFT, padx=5)
 
         color_container = tk.Frame(self.gradient_tab)
         color_container.pack(fill=tk.X, expand=True, padx=20, pady=(10, 0))
@@ -173,7 +173,7 @@ class GradientFrameGenerator:
         btn_frame = tk.Frame(color_frame)
         btn_frame.pack(fill=tk.X, pady=5)
 
-        tk.Button(btn_frame, text="+ Add Color", command=self.add_color_pair, bg="lightblue").pack(side=tk.LEFT)
+        ttk.Button(btn_frame, text="+ Add Color", command=self.add_color_pair).pack(side=tk.LEFT)
 
         controls_container = tk.Frame(self.gradient_tab)
         controls_container.pack(fill=tk.X, expand=True, padx=20, pady=(10, 0))
@@ -187,7 +187,7 @@ class GradientFrameGenerator:
         tk.Label(slider_frame, text="Number of Frames:").pack(side=tk.LEFT, padx=(0, 10))
 
         self.frame_count_var = tk.IntVar(value=10)
-        self.frame_slider = tk.Scale(slider_frame, from_=2, to=500, variable=self.frame_count_var, orient=tk.HORIZONTAL, length=300)
+        self.frame_slider = ttk.Scale(slider_frame, from_=2, to=500, variable=self.frame_count_var, orient=tk.HORIZONTAL, length=300, command=lambda v: self.frame_count_var.set(int(float(v))))
         self.frame_slider.pack(side=tk.LEFT)
 
         tk.Label(slider_frame, textvariable=self.frame_count_var, width=4).pack(side=tk.LEFT, padx=(5, 0))
@@ -197,7 +197,7 @@ class GradientFrameGenerator:
 
         tk.Label(mode_frame, text="Mode:").pack(side=tk.LEFT, padx=(0, 10))
 
-        self.mode_toggle = tk.Checkbutton(mode_frame, text="Auto Mode", variable=self.auto_mode, command=self.toggle_mode, font=("Arial", 10))
+        self.mode_toggle = ttk.Checkbutton(mode_frame, text="Auto Mode", variable=self.auto_mode, command=self.toggle_mode)
         self.mode_toggle.pack(side=tk.LEFT)
 
         self.mode_desc = tk.Label(mode_frame, text="", fg="gray", font=("Arial", 9))
@@ -209,7 +209,7 @@ class GradientFrameGenerator:
         controls_frame = tk.LabelFrame(controls_container, text="Generation Controls", padx=10, pady=10)
         controls_frame.pack(fill=tk.X, expand=True)
 
-        self.start_button = tk.Button(self.gradient_tab, text="START GENERATION", command=self.start_generation, bg="lightgreen", font=("Arial", 12, "bold"), padx=20, pady=10)
+        self.start_button = ttk.Button(self.gradient_tab, text="START GENERATION", command=self.start_generation)
         self.start_button.pack()
 
         self.status_label = tk.Label(self.gradient_tab, text="Ready", fg="blue")
@@ -237,7 +237,7 @@ class GradientFrameGenerator:
         self.extractor_notebook.add(self.folder_tab, text="Folder Batch")
         self._setup_folder_extractor()
 
-        tk.Button(self.extractor_tab, text="EXTRACT FRAMES", command=self.extract_frames, bg="lightblue", font=("Arial", 12, "bold"), padx=20, pady=10).pack(pady=20)
+        ttk.Button(self.extractor_tab, text="EXTRACT FRAMES", command=self.extract_frames).pack()
 
         self.extractor_status = tk.Label(self.extractor_tab, text="Ready", fg="blue")
         self.extractor_status.pack()
@@ -249,7 +249,7 @@ class GradientFrameGenerator:
         self.extractor_image_label = tk.Label(input_frame, text="No image loaded", bg="gray90", width=50, height=15)
         self.extractor_image_label.pack(padx=10, pady=10)
 
-        tk.Button(input_frame, text="Load Sprite Sheet", command=self.load_extractor_image).pack()
+        ttk.Button(input_frame, text="Load Sprite Sheet", command=self.load_extractor_image).pack()
 
         size_frame = tk.LabelFrame(self.single_tab, text="Frame Settings", padx=10, pady=10)
         size_frame.pack(fill=tk.X, pady=(0, 10))
@@ -259,7 +259,7 @@ class GradientFrameGenerator:
 
         tk.Label(width_frame, text="Frame Width:", width=15, anchor="w").pack(side=tk.LEFT)
         self.frame_width_var = tk.IntVar(value=32)
-        self.frame_width_entry = tk.Entry(width_frame, textvariable=self.frame_width_var, width=10)
+        self.frame_width_entry = ttk.Entry(width_frame, textvariable=self.frame_width_var, width=10)
         self.frame_width_entry.pack(side=tk.LEFT, padx=(10, 0))
         tk.Label(width_frame, text="px").pack(side=tk.LEFT, padx=(5, 0))
 
@@ -268,19 +268,21 @@ class GradientFrameGenerator:
 
         tk.Label(height_frame, text="Frame Height:", width=15, anchor="w").pack(side=tk.LEFT)
         self.frame_height_var = tk.IntVar(value=32)
-        self.frame_height_entry = tk.Entry(height_frame, textvariable=self.frame_height_var, width=10)
+        self.frame_height_entry = ttk.Entry(height_frame, textvariable=self.frame_height_var, width=10)
         self.frame_height_entry.pack(side=tk.LEFT, padx=(10, 0))
         tk.Label(height_frame, text="px").pack(side=tk.LEFT, padx=(5, 0))
 
     def _setup_folder_extractor(self):
-        folder_frame = tk.LabelFrame(self.folder_tab, text="Input Folder (Sprite Sheets)", padx=10, pady=10)
-        folder_frame.pack(fill=tk.X, pady=(0, 10))
+        folder_frame = ttk.Frame(self.folder_tab)
+        folder_frame.pack(fill=tk.X, padx=5, pady=2)
 
-        self.folder_path_var = tk.StringVar(value="No folder selected")
-        folder_label = tk.Label(folder_frame, textvariable=self.folder_path_var, bg="white", relief="sunken", anchor="w", padx=5, pady=5)
-        folder_label.pack(fill=tk.X, padx=10, pady=(10, 5))
+        ttk.Label(folder_frame, text="Folder:", width=8).pack(side=tk.LEFT)
 
-        tk.Button(folder_frame, text="Browse Folder", command=self.select_extractor_folder).pack(pady=(5, 10))
+        self.folder_path_var = tk.StringVar(value="")
+        self.folder_entry = ttk.Entry(folder_frame, textvariable=self.folder_path_var, width=30)
+        self.folder_entry.pack(side=tk.LEFT, padx=(5, 5), fill=tk.X, expand=True)
+
+        ttk.Button(folder_frame, text="Browse", command=self.select_extractor_folder, width=8).pack(side=tk.LEFT)
 
     def open_naming_settings(self):
         dialog = tk.Toplevel(self.root)
@@ -302,14 +304,14 @@ class GradientFrameGenerator:
         file_enable_frame = tk.Frame(file_frame)
         file_enable_frame.pack(fill=tk.X, pady=(0, 10))
 
-        tk.Checkbutton(file_enable_frame, text="Enable custom file names", variable=self.custom_name_enabled, command=lambda: self.update_file_widgets(dialog)).pack(anchor="w")
+        ttk.Checkbutton(file_enable_frame, text="Enable custom file names", variable=self.custom_name_enabled, command=lambda: self.update_file_widgets(dialog)).pack(anchor="w")
 
         pattern_frame = tk.Frame(file_frame)
         pattern_frame.pack(fill=tk.X, pady=(0, 5))
 
         tk.Label(pattern_frame, text="File Pattern:", anchor="w").pack(fill=tk.X, pady=(0, 5))
 
-        self.pattern_entry = tk.Entry(pattern_frame, width=40)
+        self.pattern_entry = ttk.Entry(pattern_frame, width=40)
         self.pattern_entry.insert(0, self.name_pattern.get())
         self.pattern_entry.pack(fill=tk.X)
 
@@ -319,14 +321,14 @@ class GradientFrameGenerator:
         folder_enable_frame = tk.Frame(folder_frame)
         folder_enable_frame.pack(fill=tk.X, pady=(0, 10))
 
-        tk.Checkbutton(folder_enable_frame, text="Enable custom folder names", variable=self.custom_folder_enabled, command=lambda: self.update_folder_widgets(dialog)).pack(anchor="w")
+        ttk.Checkbutton(folder_enable_frame, text="Enable custom folder names", variable=self.custom_folder_enabled, command=lambda: self.update_folder_widgets(dialog)).pack(anchor="w")
 
         folder_pattern_frame = tk.Frame(folder_frame)
         folder_pattern_frame.pack(fill=tk.X, pady=(0, 5))
 
         tk.Label(folder_pattern_frame, text="Folder Pattern:", anchor="w").pack(fill=tk.X, pady=(0, 5))
 
-        self.folder_pattern_entry = tk.Entry(folder_pattern_frame, width=40)
+        self.folder_pattern_entry = ttk.Entry(folder_pattern_frame, width=40)
         self.folder_pattern_entry.insert(0, self.folder_pattern.get())
         self.folder_pattern_entry.pack(fill=tk.X)
 
@@ -344,9 +346,9 @@ class GradientFrameGenerator:
         button_frame = tk.Frame(dialog)
         button_frame.pack(fill=tk.X, padx=20, pady=(10, 10))
 
-        tk.Button(button_frame, text="Cancel", command=dialog.destroy, width=10).pack(side=tk.LEFT, padx=(0, 10))
+        ttk.Button(button_frame, text="Cancel", command=dialog.destroy, width=10).pack(side=tk.LEFT, padx=(0, 10))
 
-        tk.Button(button_frame, text="Save", command=lambda: self.save_naming_settings(dialog), bg="lightgreen", width=10).pack(side=tk.LEFT)
+        ttk.Button(button_frame, text="Save", command=lambda: self.save_naming_settings(dialog), width=10).pack(side=tk.LEFT)
 
         self.update_file_widgets(dialog)
         self.update_folder_widgets(dialog)
@@ -517,11 +519,11 @@ class GradientFrameGenerator:
 
         color_frame.widget_id = len(self.color_entries)
 
-        start_color_entry = tk.Entry(color_frame, width=10, font=("Arial", 10))
+        start_color_entry = ttk.Entry(color_frame, width=10)
         start_color_entry.insert(0, "#000000")
         start_color_entry.grid(row=0, column=0, padx=(0, 15), sticky="ew")
 
-        end_color_entry = tk.Entry(color_frame, width=10, font=("Arial", 10))
+        end_color_entry = ttk.Entry(color_frame, width=10)
         end_color_entry.insert(0, "#000000")
         end_color_entry.grid(row=0, column=1, padx=(0, 15), sticky="ew")
 
@@ -531,7 +533,7 @@ class GradientFrameGenerator:
 
         preview_label = tk.Label(preview_frame, text="→", font=("Arial", 20, "bold"), bg="gray", fg="black")
         preview_label.place(relx=0.5, rely=0.5, anchor="center")
-        remove_button = tk.Button(color_frame, text="−", width=3, font=("Arial", 10, "bold"), bg="salmon", fg="white", command=lambda: self.remove_color_pair(color_frame))
+        remove_button = ttk.Button(color_frame, text="−", width=3, command=lambda: self.remove_color_pair(color_frame))
 
         if len(self.color_entries) == 0:
             remove_button.grid_remove()
@@ -642,7 +644,7 @@ class GradientFrameGenerator:
             messagebox.showwarning("Warning", "Please load both images!")
             return
 
-        frame_count = self.frame_count_var.get()
+        frame_count = int(self.frame_count_var.get())
 
         self.status_label.config(text="Analyzing images...", fg="orange")
         self.root.update()
@@ -749,7 +751,7 @@ class GradientFrameGenerator:
             messagebox.showwarning("Warning", "Please add at least one color pair!")
             return
 
-        frame_count = self.frame_count_var.get()
+        frame_count = int(self.frame_count_var.get())
 
         self.status_label.config(text="Generating frames...", fg="orange")
         self.root.update()
@@ -845,13 +847,15 @@ class GradientFrameGenerator:
             messagebox.showerror("Error", f"Failed to load image: {str(e)}")
 
     def select_extractor_folder(self):
-        folder_path = filedialog.askdirectory(title="Select folder with images")
+        folder_path = filedialog.askdirectory(title="Select folder with sprite sheets")
         if folder_path:
-            self.extractor_folder_path = folder_path
             self.folder_path_var.set(folder_path)
 
-            image_count = self._count_images_in_folder(folder_path)
-            self.extractor_status.config(text=f"Found {image_count} images in folder", fg="blue")
+            try:
+                image_count = self._count_images_in_folder(folder_path)
+                self.extractor_status.config(text=f"Found {image_count} sprite sheets")
+            except:
+                self.extractor_status.config(text="Ready")
 
     def _count_images_in_folder(self, folder_path):
         valid_extensions = {'.png', '.jpg', '.jpeg', '.bmp', '.gif'}
@@ -929,9 +933,19 @@ class GradientFrameGenerator:
             messagebox.showerror("Error", f"Extraction failed: {str(e)}")
 
     def _extract_folder_frames(self):
-        if not hasattr(self, 'extractor_folder_path') or not self.extractor_folder_path:
+        folder_path = self.folder_path_var.get().strip()
+
+        if not folder_path:
             messagebox.showwarning("Warning", "Please select a folder first!")
             return
+
+        if not os.path.isdir(folder_path):
+            messagebox.showwarning("Warning", 
+                f"Folder not found:\n{folder_path}\n\n"
+                "Please check the path and try again.")
+            return
+
+        self.extractor_folder_path = folder_path
 
         try:
             valid_extensions = {'.png', '.jpg', '.jpeg', '.bmp', '.gif'}
