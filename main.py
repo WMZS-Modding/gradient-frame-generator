@@ -139,7 +139,7 @@ class GradientFrameGenerator:
         color_container = tk.Frame(self.gradient_tab)
         color_container.pack(fill=tk.X, expand=True, padx=20, pady=(10, 0))
 
-        color_frame = tk.LabelFrame(color_container, text="Color Mapping", padx=10, pady=10)
+        color_frame = ttk.LabelFrame(color_container, text="Color Mapping", padding=10)
         color_frame.pack(fill=tk.X, expand=True)
 
         header_frame = tk.Frame(color_frame)
@@ -205,6 +205,9 @@ class GradientFrameGenerator:
 
         self.mode_toggle = ttk.Checkbutton(mode_frame, text="Auto Mode", variable=self.auto_mode, command=self.toggle_mode)
         self.mode_toggle.pack(side=tk.LEFT)
+
+        self.mode_desc = tk.Label(mode_frame, text="", fg="gray", font=("Arial", 9))
+        self.mode_desc.pack(side=tk.LEFT, padx=(10, 0))
 
         controls_container = tk.Frame(self.gradient_tab)
         controls_container.pack(fill=tk.X, expand=True, padx=20, pady=(10, 0))
