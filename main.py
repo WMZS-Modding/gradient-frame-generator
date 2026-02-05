@@ -139,7 +139,7 @@ class GradientFrameGenerator:
         color_container = tk.Frame(self.gradient_tab)
         color_container.pack(fill=tk.X, expand=True, padx=20, pady=(10, 0))
 
-        color_frame = ttk.LabelFrame(color_container, text="Color Mapping", padding=10)
+        color_frame = tk.LabelFrame(color_container, text="Color Mapping", padx=10, pady=10)
         color_frame.pack(fill=tk.X, expand=True)
 
         header_frame = tk.Frame(color_frame)
