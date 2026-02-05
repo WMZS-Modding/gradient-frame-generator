@@ -88,7 +88,7 @@ class GradientFrameGenerator:
         center_frame = tk.Frame(self.canvas_frame)
         center_frame.pack(expand=True, fill=tk.X, padx=20)
 
-        title_label = tk.Label(center_frame, text="Gradient Frame Generator", font=("Arial", 16, "bold"))
+        title_label = ttk.Label(center_frame, text="Gradient Frame Generator")
         title_label.pack(pady=(0, 10))
 
         self.notebook = ttk.Notebook(self.canvas_frame)
@@ -108,22 +108,28 @@ class GradientFrameGenerator:
         images_container = tk.Frame(self.gradient_tab)
         images_container.pack(fill=tk.BOTH, expand=True, padx=20)
 
-        self.left_frame = tk.LabelFrame(images_container, text="Starting Image", padx=10, pady=10)
+        self.left_frame = ttk.LabelFrame(images_container, text="Starting Image", padding=10)
         self.left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
 
         self.left_image_label = tk.Label(self.left_frame, text="No image loaded", bg="gray90", width=40, height=20)
         self.left_image_label.pack(padx=10, pady=10)
+
+        self.left_filename_label = ttk.Label(self.left_frame, text="", font=("TkDefaultFont", 9))
+        self.left_filename_label.pack(pady=(0, 10))
 
         left_btn_frame = tk.Frame(self.left_frame)
         left_btn_frame.pack()
 
         ttk.Button(left_btn_frame, text="Load Image 1", command=self.load_image1).pack(side=tk.LEFT, padx=5)
 
-        self.right_frame = tk.LabelFrame(images_container, text="Ending Image", padx=10, pady=10)
+        self.right_frame = ttk.LabelFrame(images_container, text="Ending Image", padding=10)
         self.right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(10, 0))
 
         self.right_image_label = tk.Label(self.right_frame, text="No image loaded", bg="gray90", width=40, height=20)
         self.right_image_label.pack(padx=10, pady=10)
+
+        self.right_filename_label = ttk.Label(self.right_frame, text="", font=("TkDefaultFont", 9))
+        self.right_filename_label.pack(pady=(0, 10))
 
         right_btn_frame = tk.Frame(self.right_frame)
         right_btn_frame.pack()
@@ -133,7 +139,7 @@ class GradientFrameGenerator:
         color_container = tk.Frame(self.gradient_tab)
         color_container.pack(fill=tk.X, expand=True, padx=20, pady=(10, 0))
 
-        color_frame = tk.LabelFrame(color_container, text="Color Mapping", padx=10, pady=10)
+        color_frame = ttk.LabelFrame(color_container, text="Color Mapping", padding=10)
         color_frame.pack(fill=tk.X, expand=True)
 
         header_frame = tk.Frame(color_frame)
@@ -155,10 +161,10 @@ class GradientFrameGenerator:
         remove_header_frame.grid(row=0, column=3, sticky="w")
         remove_header_frame.grid_propagate(False)
 
-        tk.Label(start_header_frame, text="Starting Color", font=("Arial", 10, "bold"), anchor="w").pack(fill=tk.BOTH, expand=True, anchor="w")
-        tk.Label(end_header_frame, text="Ending Color", font=("Arial", 10, "bold"), anchor="w").pack(fill=tk.BOTH, expand=True, anchor="w")
-        tk.Label(preview_header_frame, text="Preview", font=("Arial", 10, "bold"), anchor="w").pack(fill=tk.BOTH, expand=True, anchor="w")
-        tk.Label(remove_header_frame, text="", font=("Arial", 10, "bold")).pack(fill=tk.BOTH, expand=True)
+        ttk.Label(start_header_frame, text="Starting Color", anchor="w").pack(fill=tk.BOTH, expand=True, anchor="w")
+        ttk.Label(end_header_frame, text="Ending Color", anchor="w").pack(fill=tk.BOTH, expand=True, anchor="w")
+        ttk.Label(preview_header_frame, text="Preview", anchor="w").pack(fill=tk.BOTH, expand=True, anchor="w")
+        ttk.Label(remove_header_frame, text="").pack(fill=tk.BOTH, expand=True)
 
         header_frame.grid_columnconfigure(0, weight=1, minsize=120)
         header_frame.grid_columnconfigure(1, weight=1, minsize=120)
@@ -178,35 +184,32 @@ class GradientFrameGenerator:
         controls_container = tk.Frame(self.gradient_tab)
         controls_container.pack(fill=tk.X, expand=True, padx=20, pady=(10, 0))
 
-        controls_frame = tk.LabelFrame(controls_container, text="Generation Controls", padx=10, pady=10)
+        controls_frame = ttk.LabelFrame(controls_container, text="Generation Controls", padding=10)
         controls_frame.pack(fill=tk.X, expand=True)
 
         slider_frame = tk.Frame(controls_frame)
         slider_frame.pack(fill=tk.X, pady=(0, 10))
 
-        tk.Label(slider_frame, text="Number of Frames:").pack(side=tk.LEFT, padx=(0, 10))
+        ttk.Label(slider_frame, text="Number of Frames:").pack(side=tk.LEFT, padx=(0, 10))
 
         self.frame_count_var = tk.IntVar(value=10)
         self.frame_slider = ttk.Scale(slider_frame, from_=2, to=500, variable=self.frame_count_var, orient=tk.HORIZONTAL, length=300, command=lambda v: self.frame_count_var.set(int(float(v))))
         self.frame_slider.pack(side=tk.LEFT)
 
-        tk.Label(slider_frame, textvariable=self.frame_count_var, width=4).pack(side=tk.LEFT, padx=(5, 0))
+        ttk.Label(slider_frame, textvariable=self.frame_count_var, width=4).pack(side=tk.LEFT, padx=(5, 0))
 
         mode_frame = tk.Frame(controls_frame)
         mode_frame.pack(fill=tk.X, pady=(0, 10))
 
-        tk.Label(mode_frame, text="Mode:").pack(side=tk.LEFT, padx=(0, 10))
+        ttk.Label(mode_frame, text="Mode:").pack(side=tk.LEFT, padx=(0, 10))
 
         self.mode_toggle = ttk.Checkbutton(mode_frame, text="Auto Mode", variable=self.auto_mode, command=self.toggle_mode)
         self.mode_toggle.pack(side=tk.LEFT)
 
-        self.mode_desc = tk.Label(mode_frame, text="", fg="gray", font=("Arial", 9))
-        self.mode_desc.pack(side=tk.LEFT, padx=(10, 0))
-
         controls_container = tk.Frame(self.gradient_tab)
         controls_container.pack(fill=tk.X, expand=True, padx=20, pady=(10, 0))
 
-        controls_frame = tk.LabelFrame(controls_container, text="Generation Controls", padx=10, pady=10)
+        controls_frame = ttk.LabelFrame(controls_container, text="Generation Controls", padding=10)
         controls_frame.pack(fill=tk.X, expand=True)
 
         self.start_button = ttk.Button(self.gradient_tab, text="START GENERATION", command=self.start_generation)
@@ -216,7 +219,7 @@ class GradientFrameGenerator:
         self.status_label.pack(pady=(10, 20))
 
     def _setup_extractor_tab(self):
-        extractor_title = tk.Label(self.extractor_tab, text="Frame Extractor", font=("Arial", 14, "bold"))
+        extractor_title = ttk.Label(self.extractor_tab, text="Frame Extractor")
         extractor_title.pack(pady=(0, 10))
 
         desc = tk.Label(self.extractor_tab, text="Extract individual frames from sprite sheets or image sequences", fg="gray", font=("Arial", 10))
@@ -243,34 +246,37 @@ class GradientFrameGenerator:
         self.extractor_status.pack()
 
     def _setup_single_extractor(self):
-        input_frame = tk.LabelFrame(self.single_tab, text="Input Image", padx=10, pady=10)
+        input_frame = ttk.LabelFrame(self.single_tab, text="Input Image", padding=10)
         input_frame.pack(fill=tk.X, pady=(0, 10))
 
         self.extractor_image_label = tk.Label(input_frame, text="No image loaded", bg="gray90", width=50, height=15)
         self.extractor_image_label.pack(padx=10, pady=10)
 
+        self.extractor_filename_label = ttk.Label(input_frame, text="", font=("TkDefaultFont", 9))
+        self.extractor_filename_label.pack(pady=(0, 10))
+
         ttk.Button(input_frame, text="Load Sprite Sheet", command=self.load_extractor_image).pack()
 
-        size_frame = tk.LabelFrame(self.single_tab, text="Frame Settings", padx=10, pady=10)
+        size_frame = ttk.LabelFrame(self.single_tab, text="Frame Settings", padding=10)
         size_frame.pack(fill=tk.X, pady=(0, 10))
 
         width_frame = tk.Frame(size_frame)
         width_frame.pack(fill=tk.X, pady=(0, 10))
 
-        tk.Label(width_frame, text="Frame Width:", width=15, anchor="w").pack(side=tk.LEFT)
+        ttk.Label(width_frame, text="Frame Width:", width=15, anchor="w").pack(side=tk.LEFT)
         self.frame_width_var = tk.IntVar(value=32)
         self.frame_width_entry = ttk.Entry(width_frame, textvariable=self.frame_width_var, width=10)
         self.frame_width_entry.pack(side=tk.LEFT, padx=(10, 0))
-        tk.Label(width_frame, text="px").pack(side=tk.LEFT, padx=(5, 0))
+        ttk.Label(width_frame, text="px").pack(side=tk.LEFT, padx=(5, 0))
 
         height_frame = tk.Frame(size_frame)
         height_frame.pack(fill=tk.X, pady=(0, 10))
 
-        tk.Label(height_frame, text="Frame Height:", width=15, anchor="w").pack(side=tk.LEFT)
+        ttk.Label(height_frame, text="Frame Height:", width=15, anchor="w").pack(side=tk.LEFT)
         self.frame_height_var = tk.IntVar(value=32)
         self.frame_height_entry = ttk.Entry(height_frame, textvariable=self.frame_height_var, width=10)
         self.frame_height_entry.pack(side=tk.LEFT, padx=(10, 0))
-        tk.Label(height_frame, text="px").pack(side=tk.LEFT, padx=(5, 0))
+        ttk.Label(height_frame, text="px").pack(side=tk.LEFT, padx=(5, 0))
 
     def _setup_folder_extractor(self):
         folder_frame = ttk.Frame(self.folder_tab)
@@ -296,9 +302,9 @@ class GradientFrameGenerator:
         y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (400 // 2)
         dialog.geometry(f"+{x}+{y}")
 
-        tk.Label(dialog, text="Custom output naming", font=("Arial", 12, "bold")).pack(pady=(10, 5))
+        ttk.Label(dialog, text="Custom output naming").pack(pady=(10, 5))
 
-        file_frame = tk.LabelFrame(dialog, text="File Naming", padx=10, pady=10)
+        file_frame = ttk.LabelFrame(dialog, text="File Naming", padding=10)
         file_frame.pack(fill=tk.X, padx=20, pady=(5, 10))
 
         file_enable_frame = tk.Frame(file_frame)
@@ -309,13 +315,13 @@ class GradientFrameGenerator:
         pattern_frame = tk.Frame(file_frame)
         pattern_frame.pack(fill=tk.X, pady=(0, 5))
 
-        tk.Label(pattern_frame, text="File Pattern:", anchor="w").pack(fill=tk.X, pady=(0, 5))
+        ttk.Label(pattern_frame, text="File Pattern:", anchor="w").pack(fill=tk.X, pady=(0, 5))
 
         self.pattern_entry = ttk.Entry(pattern_frame, width=40)
         self.pattern_entry.insert(0, self.name_pattern.get())
         self.pattern_entry.pack(fill=tk.X)
 
-        folder_frame = tk.LabelFrame(dialog, text="Folder Naming", padx=10, pady=10)
+        folder_frame = ttk.LabelFrame(dialog, text="Folder Naming", padding=10)
         folder_frame.pack(fill=tk.X, padx=20, pady=(5, 10))
 
         folder_enable_frame = tk.Frame(folder_frame)
@@ -326,7 +332,7 @@ class GradientFrameGenerator:
         folder_pattern_frame = tk.Frame(folder_frame)
         folder_pattern_frame.pack(fill=tk.X, pady=(0, 5))
 
-        tk.Label(folder_pattern_frame, text="Folder Pattern:", anchor="w").pack(fill=tk.X, pady=(0, 5))
+        ttk.Label(folder_pattern_frame, text="Folder Pattern:", anchor="w").pack(fill=tk.X, pady=(0, 5))
 
         self.folder_pattern_entry = ttk.Entry(folder_pattern_frame, width=40)
         self.folder_pattern_entry.insert(0, self.folder_pattern.get())
@@ -496,12 +502,16 @@ class GradientFrameGenerator:
         if path:
             self.image1_path = path
             self.display_image(path, self.left_image_label)
+            filename = os.path.basename(path)
+            self.left_filename_label.config(text=filename)
 
     def load_image2(self):
         path = filedialog.askopenfilename(filetypes=[("Image files", "*.png *.jpg *.jpeg *.bmp *.gif")])
         if path:
             self.image2_path = path
             self.display_image(path, self.right_image_label)
+            filename = os.path.basename(path)
+            self.right_filename_label.config(text=filename)
 
     def display_image(self, path, label):
         try:
@@ -835,6 +845,8 @@ class GradientFrameGenerator:
         if path:
             self.extractor_image_path = path
             self.display_extractor_image(path)
+            filename = os.path.basename(path)
+            self.extractor_filename_label.config(text=filename)
 
     def display_extractor_image(self, path):
         try:
