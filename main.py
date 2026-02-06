@@ -102,6 +102,10 @@ class GradientFrameGenerator:
         self.notebook.add(self.extractor_tab, text="Frame Extractor")
         self._setup_extractor_tab()
 
+        self.resize_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.resize_tab, text="Resize Image")
+        self._setup_resize_tab()
+
         self.notebook.bind("<<NotebookTabChanged>>", self.on_tab_changed)
 
     def _setup_gradient_tab(self):
@@ -292,6 +296,52 @@ class GradientFrameGenerator:
         self.folder_entry.pack(side=tk.LEFT, padx=(5, 5), fill=tk.X, expand=True)
 
         ttk.Button(folder_frame, text="Browse", command=self.select_extractor_folder, width=8).pack(side=tk.LEFT)
+
+    def _setup_resize_tab(self):
+        input_frame = ttk.LabelFrame(self.resize_tab, text="Input Image", padding=10)
+        input_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+
+        self.resize_image_label = tk.Label(input_frame, text="No image loaded", bg="gray90", width=40, height=15)
+        self.resize_image_label.pack(padx=10, pady=10)
+
+        self.resize_filename_label = ttk.Label(input_frame, text="", font=("TkDefaultFont", 9))
+        self.resize_filename_label.pack(pady=(0, 10))
+
+        ttk.Button(input_frame, text="Load Image", command=self.load_resize_image).pack()
+
+        resize_frame = ttk.LabelFrame(self.resize_tab, text="Resize Settings", padding=10)
+        resize_frame.pack(fill=tk.X, padx=20, pady=10)
+
+        width_frame = ttk.Frame(resize_frame)
+        width_frame.pack(fill=tk.X, pady=5)
+
+        ttk.Label(width_frame, text="Width:", width=10).pack(side=tk.LEFT)
+        self.resize_width_var = tk.IntVar(value=32)
+        ttk.Entry(width_frame, textvariable=self.resize_width_var, width=10).pack(side=tk.LEFT, padx=(5, 0))
+        ttk.Label(width_frame, text="px").pack(side=tk.LEFT, padx=(2, 0))
+
+        height_frame = ttk.Frame(resize_frame)
+        height_frame.pack(fill=tk.X, pady=5)
+
+        ttk.Label(height_frame, text="Height:", width=10).pack(side=tk.LEFT)
+        self.resize_height_var = tk.IntVar(value=32)
+        ttk.Entry(height_frame, textvariable=self.resize_height_var, width=10).pack(side=tk.LEFT, padx=(5, 0))
+        ttk.Label(height_frame, text="px").pack(side=tk.LEFT, padx=(2, 0))
+
+        current_frame = ttk.Frame(resize_frame)
+        current_frame.pack(fill=tk.X, pady=5)
+
+        self.current_dims_label = ttk.Label(current_frame, text="Current: -- × --")
+        self.current_dims_label.pack(anchor="w")
+
+        button_frame = ttk.Frame(resize_frame)
+        button_frame.pack(fill=tk.X, pady=10)
+
+        ttk.Button(button_frame, text="Resize (Pixel)", command=lambda: self.resize_image("nearest")).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(button_frame, text="Resize (Original)", command=lambda: self.resize_image("bilinear")).pack(side=tk.LEFT)
+
+        self.resize_status_label = ttk.Label(self.resize_tab, text="")
+        self.resize_status_label.pack(pady=5)
 
     def open_naming_settings(self):
         dialog = tk.Toplevel(self.root)
@@ -1061,6 +1111,92 @@ class GradientFrameGenerator:
             self.extractor_status.config(text="Error!", fg="red")
             messagebox.showerror("Error", f"Batch extraction failed: {str(e)}")
 
+    def load_resize_image(self):
+        path = filedialog.askopenfilename(filetypes=[("Image files", "*.png *.jpg *.jpeg *.bmp *.gif")])
+        if path:
+            self.resize_image_path = path
+            self.display_resize_image(path)
+            filename = os.path.basename(path)
+            self.resize_filename_label.config(text=filename)
+
+            try:
+                img = Image.open(path)
+                self.current_dims_label.config(text=f"Current: {img.width} × {img.height}")
+                self.resize_width_var.set(img.width)
+                self.resize_height_var.set(img.height)
+            except:
+                pass
+
+    def display_resize_image(self, path):
+        try:
+            img = Image.open(path)
+            img.thumbnail((400, 400))
+            photo = ImageTk.PhotoImage(img)
+            self.resize_image_label.configure(image=photo, text="")
+            self.resize_image_label.image = photo
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load image: {str(e)}")
+
+    def resize_image(self, method="nearest"):
+        if not hasattr(self, 'resize_image_path') or not self.resize_image_path:
+            messagebox.showwarning("Warning", "Please load an image first!")
+            return
+
+        try:
+            width = self.resize_width_var.get()
+            height = self.resize_height_var.get()
+
+            if width <= 0 or height <= 0:
+                messagebox.showwarning("Warning", "Dimensions must be positive!")
+                return
+
+            interpol = Image.NEAREST if method == "nearest" else Image.BILINEAR
+            img = Image.open(self.resize_image_path)
+
+            self.resize_status_label.config(text=f"Resizing... ({method})")
+            self.root.update()
+
+            resized_img = img.resize((width, height), interpol)
+
+            if hasattr(self, 'custom_folder_enabled') and self.custom_folder_enabled.get():
+                resize_folders = [d for d in os.listdir(self.save_folder) if os.path.isdir(os.path.join(self.save_folder, d))]
+                next_number = len(resize_folders)
+                folder_pattern = self.folder_pattern.get()
+                output_dir_name = folder_pattern.replace('{number', '{0').format(next_number)
+            else:
+                resize_folders = [d for d in os.listdir(self.save_folder) if os.path.isdir(os.path.join(self.save_folder, d)) and d.startswith("resized_")]
+                next_number = len(resize_folders)
+                output_dir_name = f"resized_{next_number}"
+
+            output_dir = os.path.join(self.save_folder, output_dir_name)
+            os.makedirs(output_dir, exist_ok=True)
+
+            original_name = os.path.splitext(os.path.basename(self.resize_image_path))[0]
+
+            if hasattr(self, 'custom_name_enabled') and self.custom_name_enabled.get():
+                existing_files = [f for f in os.listdir(output_dir) if f.lower().endswith('.png')]
+                file_number = len(existing_files)
+
+                file_pattern = self.name_pattern.get()
+                output_name = file_pattern.replace('{number', '{0').format(file_number)
+                if not output_name.lower().endswith('.png'):
+                    output_name += '.png'
+            else:
+                output_name = f"{original_name}_{width}x{height}_{method}.png"
+
+            output_path = os.path.join(output_dir, output_name)
+            resized_img.save(output_path)
+
+            self.resize_status_label.config(text=f"Saved to {output_dir_name}/")
+            messagebox.showinfo("Success", 
+                f"Resized to {width}×{height} using {method} interpolation\n"
+                f"Saved to: {output_dir}/\n"
+                f"File: {output_name}")
+
+        except Exception as e:
+            self.resize_status_label.config(text="Error!")
+            messagebox.showerror("Error", f"Resize failed: {str(e)}")
+
     def on_tab_changed(self, event):
         selected = self.notebook.index(self.notebook.select())
         self.frame_extractor_mode.set(selected == 1)
@@ -1078,7 +1214,7 @@ class GradientFrameGenerator:
         messagebox.showinfo("YouTube", "Check our YouTube channel for tutorials and demonstrations.")
 
     def show_about(self):
-        messagebox.showinfo("About", "Gradient Frame Generator v1.1\n\nA tool designed to create frames of your gradient.\n\nCredits:\nSuperHero2010: Owner and Author of Gradient Frame Generator")
+        messagebox.showinfo("About", "Gradient Frame Generator v1.2\n\nA tool designed to create frames of your gradient.\n\nCredits:\nSuperHero2010: Owner and Author of Gradient Frame Generator")
 
 def main():
     root = tk.Tk()

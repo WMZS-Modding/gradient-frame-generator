@@ -9,7 +9,8 @@ A Python application can help you create the frames based on input and output im
 - Generate frames of your gradient
 
 ### Sub features
-Frame Extractor: It's useful if you don't want to extract frames of 1 sprite sheet image manually with your photo editor/paint tools
+- Frame Extractor: It's useful if you don't want to extract frames of 1 sprite sheet image manually with your photo editor/paint tools
+- Resize Image: It's useful if you want to resize a very small image or sprite sheet without blur
 
 ## Requirements
 You need to install `Pillow`:
@@ -66,6 +67,13 @@ python main.py
 4. Choose your frames you want
 5. Click `START GENERATION` button
 6. Go to `save/gradient_frame_<number>/` and copy these gradient frame images
+
+### Resize Image
+1. Open the application
+2. Choose `Resize Image` section
+3. Import your image or sprite sheet
+4. Write your new size you want
+5. Choose `Resize` button (*If you want to resize image without blur, choose "Pixel" button. If you still prefer original method, just choose "Original" button*)
 
 ### Change file and folder names
 1. Open the application
