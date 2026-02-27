@@ -752,9 +752,7 @@ class GradientFrameGenerator:
             output_dir = os.path.join(self.save_folder, self.get_output_folder_name("gradient"))
             os.makedirs(output_dir, exist_ok=True)
 
-            skip_frames = self.skip_frames_var.get()
-
-            if skip_frames and frame_count > 2:
+            if self.skip_enabled and frame_count > 2:
                 frames_to_generate = range(1, frame_count - 1)
                 total_to_generate = frame_count - 2
                 self.status_label.config(text=f"Generating {total_to_generate} intermediate frames...", fg="orange")
@@ -803,7 +801,7 @@ class GradientFrameGenerator:
                     self.status_label.config(text=f"Generating... {generated_count}/{total_to_generate}")
                     self.root.update()
 
-            if skip_frames and frame_count > 2:
+            if self.skip_enabled and frame_count > 2:
                 self.status_label.config(text=f"{total_to_generate} frames saved to {output_dir} (skipped first & last)", fg="green")
                 messagebox.showinfo("Success", 
                     f"Generated {total_to_generate} intermediate frames!\n"
@@ -876,9 +874,7 @@ class GradientFrameGenerator:
             output_dir = os.path.join(self.save_folder, self.get_output_folder_name("gradient"))
             os.makedirs(output_dir, exist_ok=True)
 
-            skip_frames = self.skip_frames_var.get()
-
-            if skip_frames and frame_count > 2:
+            if self.skip_enabled and frame_count > 2:
                 frames_to_generate = range(1, frame_count - 1)
                 total_to_generate = frame_count - 2
                 self.status_label.config(text=f"Generating {total_to_generate} intermediate frames...", fg="orange")
@@ -927,7 +923,7 @@ class GradientFrameGenerator:
                     self.status_label.config(text=f"Generating... {generated_count}/{total_to_generate}")
                     self.root.update()
 
-            if skip_frames and frame_count > 2:
+            if self.skip_enabled and frame_count > 2:
                 self.status_label.config(text=f"{total_to_generate} frames saved to {output_dir} (skipped first & last)", fg="green")
                 messagebox.showinfo("Success", 
                     f"Generated {total_to_generate} intermediate frames!\n"
