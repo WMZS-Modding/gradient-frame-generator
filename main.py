@@ -755,10 +755,12 @@ class GradientFrameGenerator:
             if self.skip_enabled and frame_count > 2:
                 frames_to_generate = range(1, frame_count - 1)
                 total_to_generate = frame_count - 2
+                frame_offset = 1
                 self.status_label.config(text=f"Generating {total_to_generate} intermediate frames...", fg="orange")
             else:
                 frames_to_generate = range(frame_count)
                 total_to_generate = frame_count
+                frame_offset = 0
                 self.status_label.config(text="Generating frames...", fg="orange")
 
             self.root.update()
@@ -787,9 +789,9 @@ class GradientFrameGenerator:
                         result_pixels[x, y] = (r, g, b, a)
 
                 if self.custom_name_enabled.get():
-                    filename = self.name_pattern.get().replace('{number', '{0').format(generated_count)
+                    filename = self.name_pattern.get().replace('{number', '{0').format(generated_count + frame_offset)
                 else:
-                    filename = f"frame_{generated_count:04d}.png"
+                    filename = f"frame_{(generated_count + frame_offset):04d}.png"
 
                 if not filename.lower().endswith('.png'):
                     filename += '.png'
@@ -806,6 +808,7 @@ class GradientFrameGenerator:
                 messagebox.showinfo("Success", 
                     f"Generated {total_to_generate} intermediate frames!\n"
                     f"(Skipped frame 0 and frame {frame_count-1})\n"
+                    f"Files start from frame_{frame_offset:04d}.png\n"
                     f"Animated {len(color_positions)} unique colors\n"
                     f"Saved to: {output_dir}")
             else:
@@ -877,10 +880,12 @@ class GradientFrameGenerator:
             if self.skip_enabled and frame_count > 2:
                 frames_to_generate = range(1, frame_count - 1)
                 total_to_generate = frame_count - 2
+                frame_offset = 1
                 self.status_label.config(text=f"Generating {total_to_generate} intermediate frames...", fg="orange")
             else:
                 frames_to_generate = range(frame_count)
                 total_to_generate = frame_count
+                frame_offset = 0
 
             self.root.update()
 
@@ -909,9 +914,9 @@ class GradientFrameGenerator:
                             result_pixels[x, y] = (r, g, b, a)
 
                 if self.custom_name_enabled.get():
-                    filename = self.name_pattern.get().replace('{number', '{0').format(generated_count)
+                    filename = self.name_pattern.get().replace('{number', '{0').format(generated_count + frame_offset)
                 else:
-                    filename = f"frame_{generated_count:04d}.png"
+                    filename = f"frame_{(generated_count + frame_offset):04d}.png"
 
                 if not filename.lower().endswith('.png'):
                     filename += '.png'
@@ -928,6 +933,7 @@ class GradientFrameGenerator:
                 messagebox.showinfo("Success", 
                     f"Generated {total_to_generate} intermediate frames!\n"
                     f"(Skipped frame 0 and frame {frame_count-1})\n"
+                    f"Files start from frame_{frame_offset:04d}.png\n"
                     f"Saved to: {output_dir}")
             else:
                 self.status_label.config(text=f"{total_to_generate} frames saved to {output_dir}", fg="green")
@@ -1259,7 +1265,7 @@ class GradientFrameGenerator:
         messagebox.showinfo("YouTube", "Check our YouTube channel for tutorials and demonstrations.")
 
     def show_about(self):
-        messagebox.showinfo("About", "Gradient Frame Generator v1.3\n\nA tool designed to create frames of your gradient.\n\nCredits:\nSuperHero2010: Owner and Author of Gradient Frame Generator")
+        messagebox.showinfo("About", "Gradient Frame Generator v1.3.1\n\nA tool designed to create frames of your gradient.\n\nCredits:\nSuperHero2010: Owner and Author of Gradient Frame Generator")
 
 def main():
     root = tk.Tk()
