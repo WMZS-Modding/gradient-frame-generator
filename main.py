@@ -704,10 +704,12 @@ class GradientFrameGenerator:
             messagebox.showwarning("Warning", "Please load both images!")
             return
 
+        self.skip_enabled = self.skip_frames_var.get()
+
         if self.auto_mode.get():
-            self.start_auto_generation(self.skip_frames_var.get())
+            self.start_auto_generation()
         else:
-            self.start_manual_generation(self.skip_frames_var.get())
+            self.start_manual_generation()
 
     def start_auto_generation(self):
         if not self.image1_path or not self.image2_path:
