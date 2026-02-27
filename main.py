@@ -213,6 +213,13 @@ class GradientFrameGenerator:
         self.mode_desc = tk.Label(mode_frame, text="", fg="gray", font=("Arial", 9))
         self.mode_desc.pack(side=tk.LEFT, padx=(10, 0))
 
+        skip_frame = tk.Frame(controls_frame)
+        skip_frame.pack(fill=tk.X, pady=(0, 10))
+
+        self.skip_frames_var = tk.BooleanVar(value=False)
+        self.skip_check = ttk.Checkbutton(skip_frame, text="Skip first and end frames (generate only intermediate frames)", variable=self.skip_frames_var)
+        self.skip_check.pack(anchor="w", padx=20)
+
         controls_container = tk.Frame(self.gradient_tab)
         controls_container.pack(fill=tk.X, expand=True, padx=20, pady=(10, 0))
 
@@ -698,9 +705,9 @@ class GradientFrameGenerator:
             return
 
         if self.auto_mode.get():
-            self.start_auto_generation()
+            self.start_auto_generation(self.skip_frames_var.get())
         else:
-            self.start_manual_generation()
+            self.start_manual_generation(self.skip_frames_var.get())
 
     def start_auto_generation(self):
         if not self.image1_path or not self.image2_path:
@@ -743,10 +750,21 @@ class GradientFrameGenerator:
             output_dir = os.path.join(self.save_folder, self.get_output_folder_name("gradient"))
             os.makedirs(output_dir, exist_ok=True)
 
-            self.status_label.config(text="Generating frames...", fg="orange")
+            skip_frames = self.skip_frames_var.get()
+
+            if skip_frames and frame_count > 2:
+                frames_to_generate = range(1, frame_count - 1)
+                total_to_generate = frame_count - 2
+                self.status_label.config(text=f"Generating {total_to_generate} intermediate frames...", fg="orange")
+            else:
+                frames_to_generate = range(frame_count)
+                total_to_generate = frame_count
+                self.status_label.config(text="Generating frames...", fg="orange")
+
             self.root.update()
 
-            for frame in range(frame_count):
+            generated_count = 0
+            for frame in frames_to_generate:
                 result = Image.new('RGBA', img1.size)
                 result_pixels = result.load()
 
@@ -769,24 +787,33 @@ class GradientFrameGenerator:
                         result_pixels[x, y] = (r, g, b, a)
 
                 if self.custom_name_enabled.get():
-                    filename = self.name_pattern.get().replace('{number', '{0').format(frame)
+                    filename = self.name_pattern.get().replace('{number', '{0').format(generated_count)
                 else:
-                    filename = f"frame_{frame:04d}.png"
+                    filename = f"frame_{generated_count:04d}.png"
 
                 if not filename.lower().endswith('.png'):
                     filename += '.png'
 
                 result.save(os.path.join(output_dir, filename))
+                generated_count += 1
 
-                if frame % 10 == 0 or frame == frame_count - 1:
-                    self.status_label.config(text=f"Generating... {frame+1}/{frame_count}")
+                if generated_count % 10 == 0 or generated_count == total_to_generate:
+                    self.status_label.config(text=f"Generating... {generated_count}/{total_to_generate}")
                     self.root.update()
 
-            self.status_label.config(text=f"{frame_count} frames saved to {output_dir}", fg="green")
-            messagebox.showinfo("Success", 
-                f"Generated {frame_count} frames!\n"
-                f"Animated {len(color_positions)} unique colors\n"
-                f"Saved to: {output_dir}")
+            if skip_frames and frame_count > 2:
+                self.status_label.config(text=f"{total_to_generate} frames saved to {output_dir} (skipped first & last)", fg="green")
+                messagebox.showinfo("Success", 
+                    f"Generated {total_to_generate} intermediate frames!\n"
+                    f"(Skipped frame 0 and frame {frame_count-1})\n"
+                    f"Animated {len(color_positions)} unique colors\n"
+                    f"Saved to: {output_dir}")
+            else:
+                self.status_label.config(text=f"{total_to_generate} frames saved to {output_dir}", fg="green")
+                messagebox.showinfo("Success", 
+                    f"Generated {total_to_generate} frames!\n"
+                    f"Animated {len(color_positions)} unique colors\n"
+                    f"Saved to: {output_dir}")
 
         except Exception as e:
             self.status_label.config(text="Error!", fg="red")
@@ -847,7 +874,20 @@ class GradientFrameGenerator:
             output_dir = os.path.join(self.save_folder, self.get_output_folder_name("gradient"))
             os.makedirs(output_dir, exist_ok=True)
 
-            for frame in range(frame_count):
+            skip_frames = self.skip_frames_var.get()
+
+            if skip_frames and frame_count > 2:
+                frames_to_generate = range(1, frame_count - 1)
+                total_to_generate = frame_count - 2
+                self.status_label.config(text=f"Generating {total_to_generate} intermediate frames...", fg="orange")
+            else:
+                frames_to_generate = range(frame_count)
+                total_to_generate = frame_count
+
+            self.root.update()
+
+            generated_count = 0
+            for frame in frames_to_generate:
                 result = Image.new('RGBA', img1.size)
                 result_pixels = result.load()
 
@@ -859,7 +899,6 @@ class GradientFrameGenerator:
 
                 for start_color, end_color in self.color_pairs:
                     if start_color in color_positions:
-
                         for x, y in color_positions[start_color]:
                             r1, g1, b1, a1 = pixels1[x, y]
                             r2, g2, b2, a2 = pixels2[x, y]
@@ -872,22 +911,30 @@ class GradientFrameGenerator:
                             result_pixels[x, y] = (r, g, b, a)
 
                 if self.custom_name_enabled.get():
-                    filename = self.name_pattern.get().replace('{number', '{0').format(frame)
+                    filename = self.name_pattern.get().replace('{number', '{0').format(generated_count)
                 else:
-                    filename = f"frame_{frame:04d}.png"
+                    filename = f"frame_{generated_count:04d}.png"
 
                 if not filename.lower().endswith('.png'):
                     filename += '.png'
 
                 result.save(os.path.join(output_dir, filename))
+                generated_count += 1
 
-                if frame % 10 == 0:
-                    self.status_label.config(text=f"Generating... {frame+1}/{frame_count}")
+                if generated_count % 10 == 0:
+                    self.status_label.config(text=f"Generating... {generated_count}/{total_to_generate}")
                     self.root.update()
 
-            self.status_label.config(text=f"{frame_count} frames saved to {output_dir}", fg="green")
-            messagebox.showinfo("Success", 
-                f"Generated {frame_count} frames!\nSaved to: {output_dir}")
+            if skip_frames and frame_count > 2:
+                self.status_label.config(text=f"{total_to_generate} frames saved to {output_dir} (skipped first & last)", fg="green")
+                messagebox.showinfo("Success", 
+                    f"Generated {total_to_generate} intermediate frames!\n"
+                    f"(Skipped frame 0 and frame {frame_count-1})\n"
+                    f"Saved to: {output_dir}")
+            else:
+                self.status_label.config(text=f"{total_to_generate} frames saved to {output_dir}", fg="green")
+                messagebox.showinfo("Success", 
+                    f"Generated {total_to_generate} frames!\nSaved to: {output_dir}")
 
         except Exception as e:
             self.status_label.config(text="Error!", fg="red")
@@ -1214,7 +1261,7 @@ class GradientFrameGenerator:
         messagebox.showinfo("YouTube", "Check our YouTube channel for tutorials and demonstrations.")
 
     def show_about(self):
-        messagebox.showinfo("About", "Gradient Frame Generator v1.2\n\nA tool designed to create frames of your gradient.\n\nCredits:\nSuperHero2010: Owner and Author of Gradient Frame Generator")
+        messagebox.showinfo("About", "Gradient Frame Generator v1.3\n\nA tool designed to create frames of your gradient.\n\nCredits:\nSuperHero2010: Owner and Author of Gradient Frame Generator")
 
 def main():
     root = tk.Tk()
